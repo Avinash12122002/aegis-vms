@@ -25,6 +25,13 @@ export default function FacilityEMap({
   const [previewCamera, setPreviewCamera] = useState(null);
   const [mapZoom, setMapZoom] = useState(1.0);
 
+  // Sync active site if changed from header dropdown
+  React.useEffect(() => {
+    if (selectedSiteId !== 'all') {
+      setActiveSite(selectedSiteId);
+    }
+  }, [selectedSiteId]);
+
   // Filter cameras belonging to the active site
   const siteCameras = cameras.filter(c => c.siteId === activeSite);
   const unreadAlerts = events.filter(e => !e.acknowledged);

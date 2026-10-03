@@ -20,6 +20,11 @@ export class CameraStreamSimulator {
     this.zoom = camera.zoom || 1.0;
   }
 
+  updateCamera(camera) {
+    this.camera = camera;
+    this.updatePTZ(camera.pan || 0, camera.tilt || 0, camera.zoom || 1.0);
+  }
+
   updatePTZ(pan, tilt, zoom) {
     this.pan = Math.max(-100, Math.min(100, pan));
     this.tilt = Math.max(-60, Math.min(60, tilt));
@@ -138,6 +143,31 @@ export class CameraStreamSimulator {
 
     const w = canvas.width || 640;
     const h = canvas.height || 360;
+
+    // Check if camera is offline / cable cut
+    if (this.camera.status === 'offline') {
+      ctx.fillStyle = '#06080e';
+      ctx.fillRect(0, 0, w, h);
+
+      // Render static noise effect
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+      for (let y = 0; y < h; y += 3) {
+        if (Math.random() > 0.4) {
+          ctx.fillRect(0, y, w, 2);
+        }
+      }
+
+      // Offline warning banner
+      ctx.fillStyle = '#ef4444';
+      ctx.font = 'bold 15px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('⚠ VIDEO LOSS / NO SIGNAL DETECTED', w / 2, h / 2 - 12);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '11px "JetBrains Mono", monospace';
+      ctx.fillText('CHECK RTSP CARRIER / ETHERNET CABLE CONNECTION', w / 2, h / 2 + 12);
+      return;
+    }
 
     ctx.save();
     ctx.clearRect(0, 0, w, h);

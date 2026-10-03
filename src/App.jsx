@@ -58,6 +58,7 @@ export default function App() {
   const [addCameraModalOpen, setAddCameraModalOpen] = useState(false);
   const [activeIntercomCamera, setActiveIntercomCamera] = useState(null);
   const [forensicModalOpen, setForensicModalOpen] = useState(false);
+  const [playbackJumpTarget, setPlaybackJumpTarget] = useState(null);
 
   // Sound State
   const [soundMuted, setSoundMuted] = useState(false);
@@ -131,6 +132,7 @@ export default function App() {
 
   const handleJumpToPlayback = (camId, date, time) => {
     setSelectedCameraId(camId);
+    setPlaybackJumpTarget({ date, time });
     setActiveTab('playback');
   };
 
@@ -208,6 +210,7 @@ export default function App() {
             selectedCameraId={selectedCameraId}
             setSelectedCameraId={setSelectedCameraId}
             sites={sites}
+            playbackJumpTarget={playbackJumpTarget}
           />
         )}
 

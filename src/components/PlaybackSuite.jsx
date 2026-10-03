@@ -20,7 +20,13 @@ import {
 import { CameraStreamSimulator } from '../services/videoSimulator';
 import { sounds } from '../services/soundEffects';
 
-export default function PlaybackSuite({ cameras, selectedCameraId, setSelectedCameraId, sites }) {
+export default function PlaybackSuite({ 
+  cameras, 
+  selectedCameraId, 
+  setSelectedCameraId, 
+  sites,
+  playbackJumpTarget 
+}) {
   const [selectedDate, setSelectedDate] = useState('2026-10-03');
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
@@ -32,6 +38,19 @@ export default function PlaybackSuite({ cameras, selectedCameraId, setSelectedCa
   const [exportWatermark, setExportWatermark] = useState('AegisVMS-SHA256-Verified');
   const [isExporting, setIsExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
+
+  // Jump to specific timestamp when triggered from Forensic Search
+  useEffect(() => {
+    if (playbackJumpTarget) {
+      if (playbackJumpTarget.date) setSelectedDate(playbackJumpTarget.date);
+      if (playbackJumpTarget.time) {
+        const parts = playbackJumpTarget.time.split(':').map(Number);
+        if (parts.length === 3) {
+          setCurrentTimeSec(parts[0] * 3600 + parts[1] * 60 + parts[2]);
+        }
+      }
+    }
+  }, [playbackJumpTarget]);
 
   // Canvas refs for single and quad sync
   const canvasRef = useRef(null);

@@ -79,12 +79,12 @@ export default function CameraCell({
     }
   }, [tripwires]);
 
-  // Update PTZ transforms dynamically
+  // Update PTZ transforms and status dynamically
   useEffect(() => {
     if (simulatorRef.current) {
-      simulatorRef.current.updatePTZ(camera.pan || 0, camera.tilt || 0, camera.zoom || 1.0);
+      simulatorRef.current.updateCamera(camera);
     }
-  }, [camera.pan, camera.tilt, camera.zoom]);
+  }, [camera]);
 
   // Snapshot capture handler
   const handleSnapshot = (e) => {
