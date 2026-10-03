@@ -21,7 +21,7 @@ export default function FacilityEMap({
   events,
   onSelectCamera 
 }) {
-  const [internalSite, setInternalSite] = useState('site-1');
+  const [internalSite, setInternalSite] = useState('site-home');
   const activeSite = selectedSiteId !== 'all' ? selectedSiteId : internalSite;
   const [previewCamera, setPreviewCamera] = useState(null);
   const [mapZoom, setMapZoom] = useState(1.0);
@@ -34,14 +34,14 @@ export default function FacilityEMap({
 
   // Pre-configured coordinates & FOV angles for cameras on architectural floor plans
   const mapCoordinates = {
-    'cam-1': { x: 18, y: 78, angle: -45, label: 'Gate 01 Entry' },
-    'cam-2': { x: 55, y: 82, angle: -90, label: 'Dock Bay 03' },
-    'cam-3': { x: 88, y: 40, angle: 180, label: 'Perimeter East' },
-    'cam-4': { x: 48, y: 35, angle: 90, label: 'Assembly Line' },
-    'cam-5': { x: 22, y: 65, angle: -30, label: 'Reception Lobby' },
-    'cam-6': { x: 75, y: 25, angle: 135, label: 'Server Vault' },
-    'cam-7': { x: 30, y: 80, angle: -60, label: 'Parking ANPR' },
-    'cam-8': { x: 70, y: 50, angle: 45, label: 'High-Value Vault' },
+    'cpplus-1': { x: 18, y: 78, angle: -45, label: 'Cam 01 (Front / Gate)' },
+    'cpplus-2': { x: 55, y: 82, angle: -90, label: 'Cam 02 (Entry Hall)' },
+    'cpplus-3': { x: 88, y: 40, angle: 180, label: 'Cam 03 (Backyard)' },
+    'cpplus-4': { x: 48, y: 35, angle: 90, label: 'Cam 04 (Living Room)' },
+    'cpplus-5': { x: 22, y: 65, angle: -30, label: 'Cam 05 (Balcony)' },
+    'cpplus-6': { x: 75, y: 25, angle: 135, label: 'Cam 06 (Garage)' },
+    'cpplus-7': { x: 30, y: 80, angle: -60, label: 'Cam 07 (Side Lane)' },
+    'cpplus-8': { x: 70, y: 50, angle: 45, label: 'Cam 08 (Perimeter)' },
   };
 
   const handleCameraPinClick = (cam) => {

@@ -33,16 +33,25 @@ export default function App() {
   const [sites] = useState(initialSites);
   const [cameras, setCameras] = useState(() => {
     const saved = localStorage.getItem('aegis_cameras');
-    return saved ? JSON.parse(saved) : initialCameras;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.length > 0 && parsed.every(c => c.id.startsWith('cpplus'))) {
+          return parsed;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    localStorage.removeItem('aegis_cameras');
+    localStorage.removeItem('aegis_tripwires');
+    return initialCameras;
   });
-  const [selectedCameraId, setSelectedCameraId] = useState(cameras[0]?.id || 'cam-1');
+  const [selectedCameraId, setSelectedCameraId] = useState('cpplus-1');
   const [selectedSiteId, setSelectedSiteId] = useState('all');
 
   // AI & Detection Rules
-  const [tripwires, setTripwires] = useState(() => {
-    const saved = localStorage.getItem('aegis_tripwires');
-    return saved ? JSON.parse(saved) : initialTripwires;
-  });
+  const [tripwires, setTripwires] = useState(initialTripwires);
 
   // Alarms & Events
   const [events, setEvents] = useState(initialEvents);
