@@ -131,7 +131,11 @@ export default function Sidebar({
                           onClick={() => setSelectedCameraId(cam.id)}
                         >
                           <div className="camera-item-info">
-                            <span className="status-dot" style={{ width: '6px', height: '6px' }} />
+                            <span 
+                              className={`status-dot ${cam.status === 'offline' ? 'red' : ''}`} 
+                              style={{ width: '6px', height: '6px' }} 
+                              title={cam.status === 'offline' ? 'Offline (Cable Disconnect)' : 'Online (Healthy)'}
+                            />
                             <div>
                               <div className="camera-item-name">{cam.name}</div>
                               <div className="camera-item-loc">

@@ -56,7 +56,14 @@ export default function AiAnalyticsView({
     sim.start();
 
     return () => sim.stop();
-  }, [currentCamera, tripwires]);
+  }, [currentCamera.id]);
+
+  // Update tripwires dynamically without tearing down canvas loop
+  useEffect(() => {
+    if (simulatorRef.current) {
+      simulatorRef.current.setTripwires(tripwires);
+    }
+  }, [tripwires]);
 
   // Handle drawing tripwire on the overlay
   const handleCanvasClick = (e) => {

@@ -70,7 +70,7 @@ export default function CameraCell({
       clearInterval(timer);
       sim.stop();
     };
-  }, [camera, streamQuality, isMaximized]);
+  }, [camera.id, streamQuality, isMaximized]);
 
   // Update tripwires dynamically
   useEffect(() => {
