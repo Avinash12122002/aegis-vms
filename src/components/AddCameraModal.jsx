@@ -2,9 +2,13 @@ import React, { useState } from 'react';
 import { 
   Camera, 
   Search, 
+  Wifi, 
   Check, 
   Plus, 
-  Activity,
+  Compass, 
+  Cpu, 
+  Activity, 
+  AlertCircle, 
   X
 } from 'lucide-react';
 import { sounds } from '../services/soundEffects';
@@ -158,20 +162,22 @@ export default function AddCameraModal({ sites, onAddCamera, onClose }) {
                 className="btn btn-primary"
                 onClick={handleScanONVIF}
                 disabled={isScanning}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               >
-                <Search size={14} />
-                <span>{isScanning ? 'Probing Subnet...' : 'Scan for Local IP Cameras'}</span>
+                <Wifi size={14} />
+                <span>{isScanning ? 'Probing Subnet...' : 'Scan Subnet for IP Cameras'}</span>
               </button>
             </div>
 
             {/* Discovered cameras list */}
             <div style={{ marginTop: '16px' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px' }}>
-                Discovered Devices:
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px' }}>
+                <Search size={13} color="var(--accent-cyan)" />
+                <span>Discovered Devices:</span>
               </div>
               {discoveredDevices.length === 0 ? (
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>
-                  {isScanning ? 'Scanning network...' : 'Click "Scan for Local IP Cameras" to begin.'}
+                  {isScanning ? 'Scanning network...' : 'Click "Scan Subnet for IP Cameras" to begin.'}
                 </div>
               ) : (
                 discoveredDevices.map((dev, idx) => (
@@ -190,8 +196,17 @@ export default function AddCameraModal({ sites, onAddCamera, onClose }) {
                   >
                     <div>
                       <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>{dev.name}</div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                        IP: {dev.ip}:{dev.port} • {dev.onvif} {dev.ptz ? '• PTZ Supported' : ''}
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                        <span>IP: {dev.ip}:{dev.port}</span>
+                        <span>• {dev.onvif}</span>
+                        {dev.ptz && (
+                          <span style={{ color: 'var(--accent-cyan)', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                            <Compass size={11} /> PTZ
+                          </span>
+                        )}
+                        <span style={{ color: 'var(--accent-green)', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                          <Cpu size={11} /> Edge AI
+                        </span>
                       </div>
                     </div>
                     <button 
@@ -210,6 +225,10 @@ export default function AddCameraModal({ sites, onAddCamera, onClose }) {
         ) : (
           <form onSubmit={handleSubmit}>
             <div className="modal-body">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 10px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.25)', borderRadius: 'var(--radius-sm)', marginBottom: '12px', fontSize: '0.72rem', color: 'var(--accent-amber)' }}>
+                <AlertCircle size={14} />
+                <span>RTSP streams automatically negotiate H.264 / H.265 baseline with zero transcode latency.</span>
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>

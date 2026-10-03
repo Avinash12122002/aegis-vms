@@ -7,7 +7,11 @@ import {
   Compass, 
   AlertTriangle, 
   Bell, 
-  Check
+  Check, 
+  Eye, 
+  Sparkles, 
+  SlidersHorizontal, 
+  Layers
 } from 'lucide-react';
 import CameraCell from './CameraCell';
 import PTZController from './PTZController';
@@ -29,6 +33,8 @@ export default function LiveVideoWall({
   const [streamQuality, setStreamQuality] = useState('sub'); // 'sub' or 'main'
   const [isAlertDrawerOpen, setIsAlertDrawerOpen] = useState(false);
   const [maximizedCamId, setMaximizedCamId] = useState(null);
+  const [showOSD, setShowOSD] = useState(true);
+  const [showAiBoxes, setShowAiBoxes] = useState(true);
 
   // Filter cameras by site
   const visibleCameras = cameras.filter(c => selectedSiteId === 'all' || c.siteId === selectedSiteId);
@@ -64,6 +70,7 @@ export default function LiveVideoWall({
       <div className="control-toolbar">
         {/* Left: Grid Selector & Stream Mode */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginRight: '6px', fontSize: '0.72rem', color: 'var(--text-muted)' }}><Layers size={13} color="var(--accent-cyan)" /><span className="desktop-only">Grid:</span></div>
           <div className="grid-selector">
             <button 
               className={`grid-btn ${gridMode === 1 && !maximizedCamId ? 'active' : ''}`}
@@ -97,7 +104,7 @@ export default function LiveVideoWall({
 
           {/* Dual-Stream Toggle (Sub / Main Stream) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', background: 'var(--bg-primary)', padding: '3px 8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
-            <span style={{ color: 'var(--text-muted)' }}>Quality:</span>
+            <span style={{ color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}><SlidersHorizontal size={12} /> Quality:</span>
             <button 
               style={{ 
                 background: streamQuality === 'sub' ? 'var(--accent-blue)' : 'transparent', 
@@ -149,6 +156,27 @@ export default function LiveVideoWall({
               <span>PTZ Controller</span>
             </button>
           )}
+
+                    {/* Quick AI & OSD View Toggles */}
+          <button 
+            className="btn btn-secondary"
+            style={{ padding: '4px 8px', fontSize: '0.72rem', gap: '4px' }}
+            onClick={() => setShowAiBoxes(!showAiBoxes)}
+            title="Toggle AI Neural Bounding Boxes"
+          >
+            <Sparkles size={13} color={showAiBoxes ? 'var(--accent-cyan)' : 'var(--text-muted)'} />
+            <span className="desktop-only">AI Vision</span>
+          </button>
+
+          <button 
+            className="btn btn-secondary"
+            style={{ padding: '4px 8px', fontSize: '0.72rem', gap: '4px' }}
+            onClick={() => setShowOSD(!showOSD)}
+            title="Toggle Camera Telemetry OSD"
+          >
+            <Eye size={13} color={showOSD ? 'var(--accent-green)' : 'var(--text-muted)'} />
+            <span className="desktop-only">OSD</span>
+          </button>
 
           {/* Alert Drawer Button with Pulsing Badge */}
           <button 

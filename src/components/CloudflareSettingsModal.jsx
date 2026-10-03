@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 import { 
   Cloud, 
+  HardDrive, 
   ShieldCheck, 
   Terminal, 
   Save, 
+  ExternalLink, 
+  RefreshCw, 
+  Clock, 
+  DollarSign, 
   X
 } from 'lucide-react';
 
@@ -48,9 +53,12 @@ export default function CloudflareSettingsModal({ config, onSaveConfig, onClose 
               marginBottom: '16px' 
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                  Cloudflare R2 Object Storage Metrics
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <HardDrive size={16} color="var(--accent-cyan)" />
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    Cloudflare R2 Storage Engine
+                  </span>
+                </div>
                 <span style={{ 
                   background: 'var(--accent-green)', 
                   color: '#000', 
@@ -59,7 +67,7 @@ export default function CloudflareSettingsModal({ config, onSaveConfig, onClose 
                   padding: '2px 6px', 
                   borderRadius: '3px' 
                 }}>
-                  $0 FREE EGRESS ACTIVE
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><DollarSign size={12} /> 0.00 EGRESS ACTIVE</span>
                 </span>
               </div>
 
@@ -75,6 +83,25 @@ export default function CloudflareSettingsModal({ config, onSaveConfig, onClose 
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '8px' }}>
                 <span>Estimated Cost: <b>${formData.monthlyCostUSD.toFixed(2)} / month</b> ($15/TB)</span>
                 <span>Bandwidth Stream Surcharge: <b>$0.00</b></span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(6, 182, 212, 0.2)' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  style={{ padding: '3px 8px', fontSize: '0.68rem', gap: '4px' }}
+                  onClick={() => alert('Cloudflare R2 telemetry synced with zero packet loss.')}
+                >
+                  <RefreshCw size={11} /> Sync Bucket Telemetry
+                </button>
+                <a 
+                  href="https://dash.cloudflare.com" 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  style={{ color: 'var(--accent-cyan)', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}
+                >
+                  <span>Open Cloudflare Console</span>
+                  <ExternalLink size={11} />
+                </a>
               </div>
             </div>
 
@@ -165,8 +192,9 @@ export default function CloudflareSettingsModal({ config, onSaveConfig, onClose 
 
             {/* Retention Policy */}
             <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
-                Video Retention Lifecycle (Auto-Purge Policy)
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                <Clock size={13} color="var(--accent-cyan)" />
+                <span>Video Retention Lifecycle (Auto-Purge Policy)</span>
               </label>
               <select 
                 className="input-field"

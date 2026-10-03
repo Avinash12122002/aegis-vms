@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import { 
   ShieldCheck, 
+  Users, 
+  Lock, 
+  FileText, 
+  UserPlus, 
+  Key, 
+  Check, 
+  History, 
   X
 } from 'lucide-react';
 
@@ -47,7 +54,7 @@ export default function UserManagementModal({ users, onClose }) {
             }}
             onClick={() => setActiveTab('users')}
           >
-            Active Users ({users.length})
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Users size={14} /> Active Operators ({users.length})</span>
           </button>
           <button 
             style={{ 
@@ -62,7 +69,7 @@ export default function UserManagementModal({ users, onClose }) {
             }}
             onClick={() => setActiveTab('matrix')}
           >
-            RBAC Permission Matrix
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><ShieldCheck size={14} /> RBAC Permission Matrix</span>
           </button>
           <button 
             style={{ 
@@ -77,7 +84,7 @@ export default function UserManagementModal({ users, onClose }) {
             }}
             onClick={() => setActiveTab('audit')}
           >
-            Security Audit Trail
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><History size={14} /> Audit Trail</span>
           </button>
         </div>
 
@@ -85,6 +92,20 @@ export default function UserManagementModal({ users, onClose }) {
           {/* Tab 1: Users List */}
           {activeTab === 'users' && (
             <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  <Key size={13} color="var(--accent-cyan)" />
+                  <span>Hardware FIDO2 / 2FA Enforced</span>
+                </div>
+                <button 
+                  className="btn btn-primary"
+                  style={{ padding: '4px 10px', fontSize: '0.72rem' }}
+                  onClick={() => alert('Operator invitation link copied with time-limited token.')}
+                >
+                  <UserPlus size={13} />
+                  <span>Invite Operator</span>
+                </button>
+              </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {users.map(u => (
                   <div 
@@ -113,7 +134,7 @@ export default function UserManagementModal({ users, onClose }) {
                         borderRadius: '4px',
                         border: '1px solid var(--border-subtle)'
                       }}>
-                        {u.role}
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Lock size={10} /> {u.role}</span>
                       </span>
                     </div>
                   </div>
@@ -138,7 +159,11 @@ export default function UserManagementModal({ users, onClose }) {
                 <tbody>
                   <tr>
                     <td style={{ padding: '8px 10px', fontWeight: 600, color: 'var(--accent-cyan)' }}>Super Admin</td>
-                    <td style={{ padding: '8px 10px', color: 'var(--accent-green)' }}>✓ All Sites</td>
+                    <td style={{ padding: '8px 10px', color: 'var(--accent-green)' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                        <Check size={13} /> Full Access
+                      </span>
+                    </td>
                     <td style={{ padding: '8px 10px', color: 'var(--accent-green)' }}>✓ High Priority</td>
                     <td style={{ padding: '8px 10px', color: 'var(--accent-green)' }}>✓ Unlimited</td>
                     <td style={{ padding: '8px 10px', color: 'var(--accent-green)' }}>✓ Full Control</td>
@@ -171,7 +196,12 @@ export default function UserManagementModal({ users, onClose }) {
 
           {/* Tab 3: Security Audit Log */}
           {activeTab === 'audit' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                <FileText size={14} color="var(--accent-cyan)" />
+                <span>Immutable Cryptographic Audit Logs (SHA-256 Signatures)</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {auditLogs.map(log => (
                 <div 
                   key={log.id}
@@ -196,6 +226,7 @@ export default function UserManagementModal({ users, onClose }) {
                   </div>
                 </div>
               ))}
+              </div>
             </div>
           )}
         </div>

@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 import { 
   Map, 
+  MapPin, 
   Radio, 
+  Eye, 
+  AlertTriangle, 
+  Layers, 
   ZoomIn, 
   ZoomOut, 
+  Compass, 
   X
 } from 'lucide-react';
 import { sounds } from '../services/soundEffects';
@@ -20,6 +25,8 @@ export default function FacilityEMap({
   const activeSite = selectedSiteId !== 'all' ? selectedSiteId : internalSite;
   const [previewCamera, setPreviewCamera] = useState(null);
   const [mapZoom, setMapZoom] = useState(1.0);
+  const [showFov, setShowFov] = useState(true);
+  const [activeLayer, setActiveLayer] = useState('floor1');
 
   // Filter cameras belonging to the active site
   const siteCameras = cameras.filter(c => c.siteId === activeSite);
@@ -69,6 +76,24 @@ export default function FacilityEMap({
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <button 
+              className="btn btn-secondary"
+              style={{ padding: '4px 8px', fontSize: '0.72rem', gap: '4px' }}
+              onClick={() => setShowFov(!showFov)}
+              title="Toggle Camera FOV Vision Cones"
+            >
+              <Eye size={13} color={showFov ? 'var(--accent-cyan)' : 'var(--text-muted)'} />
+              <span>FOV Cones</span>
+            </button>
+            <button 
+              className="btn btn-secondary"
+              style={{ padding: '4px 8px', fontSize: '0.72rem', gap: '4px' }}
+              onClick={() => setActiveLayer(activeLayer === 'floor1' ? 'security' : 'floor1')}
+              title="Toggle Architectural / Security Layer"
+            >
+              <Layers size={13} />
+              <span>{activeLayer === 'floor1' ? 'L1 Plan' : 'Security Mesh'}</span>
+            </button>
+            <button 
               className="btn btn-secondary" 
               style={{ padding: '4px 8px', fontSize: '0.72rem' }}
               onClick={() => setMapZoom(prev => Math.min(1.6, prev + 0.15))}
@@ -92,6 +117,10 @@ export default function FacilityEMap({
             >
               100%
             </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '4px', fontSize: '0.7rem', color: 'var(--accent-red)' }}>
+              <AlertTriangle size={12} />
+              <span>{unreadAlerts.length} Alarms</span>
+            </div>
           </div>
         </div>
 
@@ -100,13 +129,38 @@ export default function FacilityEMap({
           flex: 1, 
           position: 'relative', 
           overflow: 'hidden', 
-          background: '#070a12',
+          background: activeLayer === 'security' ? '#040711' : '#070a12',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px)',
-          backgroundSize: '24px 24px'
+          backgroundImage: activeLayer === 'security' 
+            ? 'linear-gradient(rgba(6, 182, 212, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(6, 182, 212, 0.08) 1px, transparent 1px)'
+            : 'radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px)',
+          backgroundSize: activeLayer === 'security' ? '30px 30px' : '24px 24px'
         }}>
+          {/* True North Orientation Compass */}
+          <div 
+            style={{ 
+              position: 'absolute', 
+              top: '16px', 
+              right: '16px', 
+              background: 'rgba(5,7,10,0.85)', 
+              border: '1px solid var(--border-subtle)', 
+              borderRadius: '50%', 
+              width: '38px', 
+              height: '38px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              color: 'var(--accent-cyan)', 
+              zIndex: 10,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.5)'
+            }} 
+            title="True North Bearing (0° N)"
+          >
+            <Compass size={20} />
+          </div>
+
           {/* Blueprint SVG Layout */}
           <div style={{ 
             position: 'relative', 
@@ -161,18 +215,20 @@ export default function FacilityEMap({
                   onClick={() => handleCameraPinClick(cam)}
                 >
                   {/* Field of View (FOV) Visual Cone */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    width: '90px',
-                    height: '90px',
-                    transform: `translate(-50%, -50%) rotate(${coords.angle}deg)`,
-                    pointerEvents: 'none',
-                    clipPath: 'polygon(50% 50%, 0% 0%, 100% 0%)',
-                    background: isAlarming ? 'rgba(239, 68, 68, 0.45)' : 'rgba(6, 182, 212, 0.22)',
-                    borderTop: isAlarming ? '2px solid #ef4444' : '2px solid var(--accent-cyan)',
-                  }} />
+                  {showFov && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      width: '90px',
+                      height: '90px',
+                      transform: `translate(-50%, -50%) rotate(${coords.angle}deg)`,
+                      pointerEvents: 'none',
+                      clipPath: 'polygon(50% 50%, 0% 0%, 100% 0%)',
+                      background: isAlarming ? 'rgba(239, 68, 68, 0.45)' : 'rgba(6, 182, 212, 0.22)',
+                      borderTop: isAlarming ? '2px solid #ef4444' : '2px solid var(--accent-cyan)',
+                    }} />
+                  )}
 
                   {/* Pulsing Alarm Beacon */}
                   {isAlarming && (
@@ -203,7 +259,7 @@ export default function FacilityEMap({
                     boxShadow: isAlarming ? '0 0 16px #ef4444' : '0 0 10px rgba(6, 182, 212, 0.4)',
                     color: '#ffffff'
                   }}>
-                    <Radio size={13} />
+                    <MapPin size={13} />
                   </div>
 
                   {/* Camera Label Tag */}
@@ -243,7 +299,10 @@ export default function FacilityEMap({
               zIndex: 30
             }}>
               <div style={{ padding: '8px 12px', background: 'var(--bg-tertiary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontSize: '0.78rem', fontWeight: 600 }}>{previewCamera.name}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', fontWeight: 600 }}>
+                  <Radio size={13} color="var(--accent-green)" />
+                  <span>{previewCamera.name}</span>
+                </div>
                 <button 
                   onClick={() => setPreviewCamera(null)}
                   style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}

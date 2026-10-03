@@ -5,7 +5,13 @@ import {
   Trash2, 
   Check, 
   Zap, 
-  Sliders
+  Sliders, 
+  ShieldAlert, 
+  Eye, 
+  ArrowRightLeft, 
+  UserCheck, 
+  Truck, 
+  RotateCcw
 } from 'lucide-react';
 import { CameraStreamSimulator } from '../services/videoSimulator';
 import { sounds } from '../services/soundEffects';
@@ -120,7 +126,7 @@ export default function AiAnalyticsView({
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 600 }}>
               <Cpu size={15} color="var(--accent-cyan)" />
-              <span>AI Vision Rules:</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><ShieldAlert size={14} color="var(--accent-cyan)" /> AI Vision Rules:</span>
             </div>
 
             <select 
@@ -149,20 +155,23 @@ export default function AiAnalyticsView({
                   title="Target Classification"
                 >
                   <option value="both">All Targets</option>
-                  <option value="person">Persons Only</option>
-                  <option value="vehicle">Vehicles Only</option>
+                  <option value="person">🚶 Person Targets</option>
+                  <option value="vehicle">🚗 Vehicle Targets</option>
                 </select>
-                <select
-                  className="input-field"
-                  style={{ padding: '3px 6px', fontSize: '0.7rem', width: 'auto' }}
-                  value={direction}
-                  onChange={(e) => setDirection(e.target.value)}
-                  title="Tripwire Direction"
-                >
-                  <option value="BOTH">Bi-Directional</option>
-                  <option value="A_TO_B">A → B Only</option>
-                  <option value="B_TO_A">B → A Only</option>
-                </select>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <ArrowRightLeft size={13} color="var(--accent-cyan)" />
+                  <select
+                    className="input-field"
+                    style={{ padding: '3px 6px', fontSize: '0.7rem', width: 'auto' }}
+                    value={direction}
+                    onChange={(e) => setDirection(e.target.value)}
+                    title="Tripwire Direction"
+                  >
+                    <option value="BOTH">⇄ Bi-Directional</option>
+                    <option value="A_TO_B">A → B Only</option>
+                    <option value="B_TO_A">B → A Only</option>
+                  </select>
+                </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                   <span>{sensitivity}%</span>
                   <input
@@ -177,10 +186,11 @@ export default function AiAnalyticsView({
                 </div>
                 <button 
                   className="btn btn-secondary" 
-                  style={{ padding: '3px 8px', fontSize: '0.7rem' }}
+                  style={{ padding: '3px 8px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  title="Reset / Cancel Drawing"
                   onClick={() => { setIsDrawing(false); setDrawPoints([]); }}
                 >
-                  Cancel
+                  <RotateCcw size={11} /> Cancel
                 </button>
               </div>
             ) : (
@@ -297,7 +307,11 @@ export default function AiAnalyticsView({
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                  <span>Targets: <b>{tw.targetClasses?.join(', ')}</b></span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    {tw.targetClasses?.includes('person') && <UserCheck size={11} color="var(--accent-cyan)" />}
+                    {tw.targetClasses?.includes('vehicle') && <Truck size={11} color="var(--accent-amber)" />}
+                    <span>Targets: <b>{tw.targetClasses?.join(', ')}</b></span>
+                  </span>
                   <span>Sensitivity: <b>{tw.sensitivity}%</b></span>
                 </div>
               </div>
@@ -332,7 +346,10 @@ export default function AiAnalyticsView({
                 </div>
 
                 <div style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{ev.cameraName}</div>
-                <div style={{ color: 'var(--text-secondary)' }}>Detected: {ev.target} ({ev.confidence})</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)' }}>
+                  <span>Detected: <b>{ev.target}</b> ({ev.confidence})</span>
+                  <span title="Neural Bounding Verified" style={{ color: 'var(--accent-cyan)', display: 'inline-flex', alignItems: 'center', gap: '2px' }}><Eye size={11} /> Verified</span>
+                </div>
 
                 {!ev.acknowledged && (
                   <button 

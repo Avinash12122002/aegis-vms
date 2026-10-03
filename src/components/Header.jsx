@@ -10,9 +10,11 @@ import {
   VolumeX, 
   Maximize, 
   Minimize, 
-  Menu,
-  Map,
-  Activity,
+  Bell, 
+  Menu, 
+  Server, 
+  Map, 
+  Activity, 
   Sparkles
 } from 'lucide-react';
 import { sounds } from '../services/soundEffects';
@@ -107,6 +109,9 @@ export default function Header({
           {unreadAlertCount > 0 && (
             <span style={{
               background: 'var(--accent-danger)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '3px',
               color: '#fff',
               fontSize: '0.65rem',
               fontWeight: 700,
@@ -114,7 +119,7 @@ export default function Header({
               borderRadius: '10px',
               marginLeft: '4px'
             }}>
-              {unreadAlertCount}
+              <Bell size={10} /> {unreadAlertCount}
             </span>
           )}
         </button>
@@ -213,7 +218,8 @@ export default function Header({
         </button>
 
         {/* Live System Online Pill */}
-        <div className="system-status-pill">
+        <div className="system-status-pill" title="Edge NVR & Cloudflare Connector Synchronized">
+          <Server size={12} color="var(--accent-green)" />
           <span className="status-dot"></span>
           <span>ONLINE</span>
         </div>

@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { 
+  Camera, 
   Search, 
   PlusCircle, 
   HardDrive, 
-  ChevronDown,
-  ChevronRight,
-  Compass,
+  Layers, 
+  Compass, 
+  CheckCircle2, 
+  ChevronDown, 
+  ChevronRight, 
   X
 } from 'lucide-react';
 
@@ -47,7 +50,7 @@ export default function Sidebar({
       {/* Search & Add Camera Bar */}
       <div className="sidebar-section">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-          <span className="sidebar-title" style={{ margin: 0 }}>Device Registry</span>
+          <span className="sidebar-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}><Camera size={14} color="var(--accent-cyan)" /> Device Registry</span>
           <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
             <button 
               className="btn btn-primary"
@@ -112,7 +115,10 @@ export default function Sidebar({
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                    <span>{site.name}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <Layers size={13} color="var(--accent-cyan)" />
+                      <span>{site.name}</span>
+                    </span>
                   </div>
                   <span style={{ 
                     fontFamily: 'var(--font-mono)', 
@@ -140,11 +146,15 @@ export default function Sidebar({
                           onClick={() => setSelectedCameraId(cam.id)}
                         >
                           <div className="camera-item-info">
-                            <span 
-                              className={`status-dot ${cam.status === 'offline' ? 'red' : ''}`} 
-                              style={{ width: '6px', height: '6px' }} 
-                              title={cam.status === 'offline' ? 'Offline (Cable Disconnect)' : 'Online (Healthy)'}
-                            />
+                            {cam.status === 'online' ? (
+                              <CheckCircle2 size={12} color="var(--accent-green)" title="Online (Healthy)" />
+                            ) : (
+                              <span 
+                                className="status-dot red" 
+                                style={{ width: '6px', height: '6px' }} 
+                                title="Offline (Cable Disconnect)"
+                              />
+                            )}
                             <div>
                               <div className="camera-item-name">{cam.name}</div>
                               <div className="camera-item-loc">
