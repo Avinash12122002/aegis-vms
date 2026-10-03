@@ -9,7 +9,8 @@ import {
   Radio, 
   Download, 
   Sparkles,
-  Wifi
+  Wifi,
+  Mic
 } from 'lucide-react';
 import { CameraStreamSimulator } from '../services/videoSimulator';
 import { sounds } from '../services/soundEffects';
@@ -21,6 +22,7 @@ export default function CameraCell({
   onToggleMaximize, 
   isMaximized,
   onOpenPTZ,
+  onOpenIntercom,
   streamQuality = 'sub', // 'sub' (faster) or 'main' (4K/HD)
   tripwires = [],
   onAlarmTrigger,
@@ -172,6 +174,18 @@ export default function CameraCell({
               title="Open PTZ Joystick & Presets"
             >
               <Compass size={14} />
+            </button>
+          )}
+
+          {/* Two-Way Audio Intercom (if audio capable) */}
+          {camera.twoWayAudioCapable && (
+            <button 
+              className="cam-icon-btn" 
+              onClick={(e) => { e.stopPropagation(); onOpenIntercom && onOpenIntercom(camera); }}
+              title="Push-to-Talk Intercom (Speak through camera speaker)"
+              style={{ color: 'var(--accent-cyan)' }}
+            >
+              <Mic size={14} />
             </button>
           )}
 

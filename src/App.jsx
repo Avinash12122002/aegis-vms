@@ -4,10 +4,13 @@ import Sidebar from './components/Sidebar';
 import LiveVideoWall from './components/LiveVideoWall';
 import PlaybackSuite from './components/PlaybackSuite';
 import AiAnalyticsView from './components/AiAnalyticsView';
+import FacilityEMap from './components/FacilityEMap';
+import CameraHealthDiagnostics from './components/CameraHealthDiagnostics';
 import CloudflareSettingsModal from './components/CloudflareSettingsModal';
 import UserManagementModal from './components/UserManagementModal';
 import AddCameraModal from './components/AddCameraModal';
-import FacilityEMap from './components/FacilityEMap';
+import TwoWayAudioModal from './components/TwoWayAudioModal';
+import ForensicSearchModal from './components/ForensicSearchModal';
 import MobileNavBar from './components/MobileNavBar';
 
 import { 
@@ -16,13 +19,14 @@ import {
   initialTripwires, 
   initialCloudflareConfig, 
   initialUsers, 
-  initialEvents 
+  initialEvents,
+  initialForensicRecords
 } from './services/mockData';
 import { sounds } from './services/soundEffects';
 
 export default function App() {
   // Navigation State
-  const [activeTab, setActiveTab] = useState('live'); // 'live', 'playback', 'ai'
+  const [activeTab, setActiveTab] = useState('live'); // 'live', 'map', 'playback', 'ai', 'health'
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Entities & State
@@ -46,11 +50,14 @@ export default function App() {
   // Settings & RBAC
   const [cloudflareConfig, setCloudflareConfig] = useState(initialCloudflareConfig);
   const [users, setUsers] = useState(initialUsers);
+  const [forensicRecords] = useState(initialForensicRecords);
 
   // Modals
   const [cloudflareModalOpen, setCloudflareModalOpen] = useState(false);
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [addCameraModalOpen, setAddCameraModalOpen] = useState(false);
+  const [activeIntercomCamera, setActiveIntercomCamera] = useState(null);
+  const [forensicModalOpen, setForensicModalOpen] = useState(false);
 
   // Sound State
   const [soundMuted, setSoundMuted] = useState(false);
@@ -80,6 +87,26 @@ export default function App() {
     setSelectedCameraId(newCam.id);
   };
 
+  // Fault Injection / Cable Cut Simulator
+  const handleToggleCameraStatus = (camId) => {
+    setCameras(prev => prev.map(c => {
+      if (c.id === camId) {
+        const nextStatus = c.status === 'online' ? 'offline' : 'online';
+        if (nextStatus === 'offline') {
+          handleAlarmTrigger({
+            cameraId: c.id,
+            cameraName: c.name,
+            target: 'Physical Link Lost (Cable Cut / Power Off)',
+            confidence: '100%',
+            timestamp: new Date().toLocaleTimeString(),
+          });
+        }
+        return { ...c, status: nextStatus };
+      }
+      return c;
+    }));
+  };
+
   // Trigger real-time alarm event
   const handleAlarmTrigger = (alarmEvent) => {
     const newEv = {
@@ -87,7 +114,7 @@ export default function App() {
       cameraId: alarmEvent.cameraId,
       cameraName: alarmEvent.cameraName,
       siteName: 'Active Branch',
-      type: 'Tripwire Breach',
+      type: alarmEvent.target.includes('Cable Cut') ? 'HARDWARE FAULT' : 'Tripwire Breach',
       target: alarmEvent.target,
       confidence: alarmEvent.confidence,
       timestamp: alarmEvent.timestamp,
@@ -100,6 +127,11 @@ export default function App() {
   const handleAcknowledgeEvent = (evId) => {
     sounds.playClick();
     setEvents(prev => prev.map(e => e.id === evId ? { ...e, acknowledged: true } : e));
+  };
+
+  const handleJumpToPlayback = (camId, date, time) => {
+    setSelectedCameraId(camId);
+    setActiveTab('playback');
   };
 
   const unreadAlerts = events.filter(e => !e.acknowledged).length;
@@ -116,6 +148,7 @@ export default function App() {
         unreadAlertCount={unreadAlerts}
         onOpenCloudflareModal={() => setCloudflareModalOpen(true)}
         onOpenUserModal={() => setUserModalOpen(true)}
+        onOpenForensicModal={() => setForensicModalOpen(true)}
         toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         soundMuted={soundMuted}
         setSoundMuted={setSoundMuted}
@@ -130,7 +163,7 @@ export default function App() {
           selectedCameraId={selectedCameraId}
           setSelectedCameraId={(id) => {
             setSelectedCameraId(id);
-            setSidebarOpen(false); // Close sidebar on mobile select
+            setSidebarOpen(false);
           }}
           selectedSiteId={selectedSiteId}
           onAddCameraClick={() => setAddCameraModalOpen(true)}
@@ -139,13 +172,14 @@ export default function App() {
           cloudflareConfig={cloudflareConfig}
         />
 
-        {/* View Switcher: Live Wall / Playback / AI Analytics */}
+        {/* View Switcher: Live Wall / E-Map / Playback / AI Analytics / Health */}
         {activeTab === 'live' && (
           <LiveVideoWall 
             cameras={cameras}
             selectedCameraId={selectedCameraId}
             setSelectedCameraId={setSelectedCameraId}
             onUpdatePTZ={handleUpdatePTZ}
+            onOpenIntercom={(cam) => setActiveIntercomCamera(cam)}
             tripwires={tripwires}
             events={events}
             onAlarmTrigger={handleAlarmTrigger}
@@ -188,6 +222,13 @@ export default function App() {
             onAcknowledgeEvent={handleAcknowledgeEvent}
           />
         )}
+
+        {activeTab === 'health' && (
+          <CameraHealthDiagnostics 
+            cameras={cameras}
+            onToggleCameraStatus={handleToggleCameraStatus}
+          />
+        )}
       </div>
 
       {/* Bottom Mobile Navigation Bar for Smartphones */}
@@ -198,7 +239,7 @@ export default function App() {
         unreadAlerts={unreadAlerts}
       />
 
-      {/* Modals */}
+      {/* Modals & Dialogs */}
       {cloudflareModalOpen && (
         <CloudflareSettingsModal 
           config={cloudflareConfig}
@@ -219,6 +260,21 @@ export default function App() {
           sites={sites}
           onAddCamera={handleAddCamera}
           onClose={() => setAddCameraModalOpen(false)}
+        />
+      )}
+
+      {activeIntercomCamera && (
+        <TwoWayAudioModal 
+          camera={activeIntercomCamera}
+          onClose={() => setActiveIntercomCamera(null)}
+        />
+      )}
+
+      {forensicModalOpen && (
+        <ForensicSearchModal 
+          forensicRecords={forensicRecords}
+          onJumpToPlayback={handleJumpToPlayback}
+          onClose={() => setForensicModalOpen(false)}
         />
       )}
     </div>

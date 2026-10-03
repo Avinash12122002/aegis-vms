@@ -1,0 +1,17 @@
+{
+  "short_name": "AegisVMS",
+  "name": "AegisVMS Enterprise Surveillance",
+  "description": "Enterprise Video Management System with Live WebRTC, Cloudflare R2, and AI Analytics",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0a0d14",
+  "theme_color": "#0a0d14",
+  "display": "standalone",
+  "orientation": "any"
+}

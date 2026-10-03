@@ -1,5 +1,5 @@
 import React from 'react';
-import { Video, Film, Cpu, Cloud, Users, Map } from 'lucide-react';
+import { Video, Film, Cpu, Cloud, Users, Map, Activity } from 'lucide-react';
 
 export default function MobileNavBar({ activeTab, setActiveTab, onOpenCloudflare, unreadAlerts }) {
   return (
@@ -9,7 +9,7 @@ export default function MobileNavBar({ activeTab, setActiveTab, onOpenCloudflare
         onClick={() => setActiveTab('live')}
       >
         <Video size={18} />
-        <span>Live Wall</span>
+        <span>Live</span>
       </button>
 
       <button 
@@ -29,23 +29,11 @@ export default function MobileNavBar({ activeTab, setActiveTab, onOpenCloudflare
       </button>
 
       <button 
-        className={`mobile-nav-item ${activeTab === 'ai' ? 'active' : ''}`}
-        onClick={() => setActiveTab('ai')}
-        style={{ position: 'relative' }}
+        className={`mobile-nav-item ${activeTab === 'health' ? 'active' : ''}`}
+        onClick={() => setActiveTab('health')}
       >
-        <Cpu size={18} />
-        <span>AI Events</span>
-        {unreadAlerts > 0 && (
-          <span style={{
-            position: 'absolute',
-            top: '2px',
-            right: '18px',
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            background: 'var(--accent-red)'
-          }} />
-        )}
+        <Activity size={18} />
+        <span>Health</span>
       </button>
 
       <button 
@@ -53,7 +41,7 @@ export default function MobileNavBar({ activeTab, setActiveTab, onOpenCloudflare
         onClick={onOpenCloudflare}
       >
         <Cloud size={18} />
-        <span>Cloud R2</span>
+        <span>R2 Cloud</span>
       </button>
     </nav>
   );

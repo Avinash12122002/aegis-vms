@@ -21,6 +21,7 @@ export default function LiveVideoWall({
   selectedCameraId, 
   setSelectedCameraId,
   onUpdatePTZ,
+  onOpenIntercom,
   tripwires,
   events,
   onAlarmTrigger,
@@ -216,6 +217,7 @@ export default function LiveVideoWall({
                 isMaximized={maximizedCamId === camera.id}
                 onToggleMaximize={() => handleToggleMaximize(camera.id)}
                 onOpenPTZ={handleOpenPTZ}
+                onOpenIntercom={onOpenIntercom}
                 streamQuality={streamQuality}
                 tripwires={tripwires}
                 onAlarmTrigger={onAlarmTrigger}

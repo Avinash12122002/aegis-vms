@@ -13,7 +13,9 @@ import {
   Bell, 
   Menu,
   Server,
-  Map
+  Map,
+  Activity,
+  Sparkles
 } from 'lucide-react';
 import { sounds } from '../services/soundEffects';
 
@@ -26,6 +28,7 @@ export default function Header({
   unreadAlertCount,
   onOpenCloudflareModal,
   onOpenUserModal,
+  onOpenForensicModal,
   toggleSidebar,
   soundMuted,
   setSoundMuted
@@ -124,6 +127,13 @@ export default function Header({
           <Cpu size={16} />
           <span>AI Vision & Tripwire</span>
         </button>
+        <button 
+          className={`nav-tab-btn ${activeTab === 'health' ? 'active' : ''}`}
+          onClick={() => setActiveTab('health')}
+        >
+          <Activity size={16} />
+          <span>Health</span>
+        </button>
       </nav>
 
       {/* Action Controls & System Status */}
@@ -137,6 +147,17 @@ export default function Header({
         }} className="desktop-time">
           {currentTime.toLocaleTimeString()}
         </div>
+
+        {/* AI Smart Search */}
+        <button 
+          className="btn btn-secondary" 
+          style={{ padding: '5px 10px', fontSize: '0.75rem', gap: '6px' }}
+          onClick={onOpenForensicModal}
+          title="AI Smart Attribute Search (Person, Vehicle, Color, Plates)"
+        >
+          <Sparkles size={15} color="var(--accent-cyan)" />
+          <span>AI Search</span>
+        </button>
 
         {/* Cloudflare Status Pill */}
         <button 

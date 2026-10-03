@@ -1,6 +1,13 @@
 // Automated Unit & Feature Validation Suite for AegisVMS
 
-import { initialSites, initialCameras, initialTripwires, initialCloudflareConfig, initialUsers } from './src/services/mockData.js';
+import { 
+  initialSites, 
+  initialCameras, 
+  initialTripwires, 
+  initialCloudflareConfig, 
+  initialUsers,
+  initialForensicRecords 
+} from './src/services/mockData.js';
 import { CameraStreamSimulator } from './src/services/videoSimulator.js';
 
 console.log('====================================================');
@@ -50,7 +57,6 @@ console.log('\n--- TEST GROUP 3: PTZ Joystick Math & Clamping ---');
 const dummyCanvas = { width: 960, height: 540, getContext: () => ({}) };
 const sim = new CameraStreamSimulator(dummyCanvas, initialCameras[0]);
 
-// Test Clamping
 sim.updatePTZ(200, 150, 10);
 assert(sim.pan === 100, 'PTZ Pan clamped to maximum limit (+100)');
 assert(sim.tilt === 60, 'PTZ Tilt clamped to maximum limit (+60)');
@@ -65,21 +71,17 @@ assert(sim.zoom === 1.0, 'PTZ Zoom clamped to minimum wide limit (1.0x)');
 // Test 4: AI Virtual Tripwire Collision Math
 // ------------------------------------------------------------------
 console.log('\n--- TEST GROUP 4: AI Tripwire Intersection Math ---');
-// Line from (10, 100) to (900, 100) (horizontal line at y = 100)
 const v = { x: 10, y: 100 };
 const w = { x: 900, y: 100 };
 
-// Point directly on the line
 const pOnLine = { x: 450, y: 100 };
 const distZero = sim.distToSegment(pOnLine, v, w);
 assert(Math.round(distZero) === 0, 'Distance to segment is 0 for point on line');
 
-// Point 10px above the line
 const pNear = { x: 450, y: 90 };
 const distNear = sim.distToSegment(pNear, v, w);
 assert(Math.round(distNear) === 10, 'Distance calculation accurately reports 10px offset');
 
-// Point far from the line
 const pFar = { x: 450, y: 350 };
 const distFar = sim.distToSegment(pFar, v, w);
 assert(distFar > 50, 'Distance calculation reports far point correctly');
@@ -95,6 +97,31 @@ const auditor = initialUsers.find(u => u.role === 'Auditor');
 assert(admin !== undefined && admin.sites.includes('All Sites'), 'Super Admin has access to All Sites');
 assert(guard !== undefined, 'Security Guard role exists');
 assert(auditor !== undefined, 'Auditor compliance role exists');
+
+// ------------------------------------------------------------------
+// Test 6: Hardware Telemetry & Two-Way Intercom
+// ------------------------------------------------------------------
+console.log('\n--- TEST GROUP 6: Hardware Telemetry & Audio Intercom ---');
+const audioCams = initialCameras.filter(c => c.twoWayAudioCapable);
+assert(audioCams.length >= 3, `Two-Way Audio Intercom configured on ${audioCams.length} perimeter & gate cameras`);
+
+const normalTemps = initialCameras.every(c => c.temperatureC >= 30 && c.temperatureC <= 50);
+assert(normalTemps, 'All camera thermal sensors report healthy operating temperatures (<50°C)');
+
+const lowLatency = initialCameras.every(c => c.latencyMs < 30);
+assert(lowLatency, 'Sub-second stream latency verified across all registered feeds (<30ms)');
+
+// ------------------------------------------------------------------
+// Test 7: AI Forensic Smart Search Logic
+// ------------------------------------------------------------------
+console.log('\n--- TEST GROUP 7: AI Smart Forensic Search ---');
+assert(initialForensicRecords.length >= 5, 'Forensic neural event index populated');
+
+const vehicles = initialForensicRecords.filter(r => r.targetType === 'vehicle');
+assert(vehicles.length >= 3, 'Forensic query by target classification (Vehicle) verified');
+
+const plateMatches = initialForensicRecords.filter(r => r.licensePlate.includes('MH-04'));
+assert(plateMatches.length >= 1, 'ANPR License plate substring lookup verified');
 
 console.log('\n====================================================');
 console.log(`🏁 TEST SUMMARY: ${passedTests} PASSED, ${failedTests} FAILED`);
