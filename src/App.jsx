@@ -7,6 +7,7 @@ import AiAnalyticsView from './components/AiAnalyticsView';
 import CloudflareSettingsModal from './components/CloudflareSettingsModal';
 import UserManagementModal from './components/UserManagementModal';
 import AddCameraModal from './components/AddCameraModal';
+import FacilityEMap from './components/FacilityEMap';
 import MobileNavBar from './components/MobileNavBar';
 
 import { 
@@ -150,6 +151,20 @@ export default function App() {
             onAlarmTrigger={handleAlarmTrigger}
             onAcknowledgeEvent={handleAcknowledgeEvent}
             selectedSiteId={selectedSiteId}
+          />
+        )}
+
+        {activeTab === 'map' && (
+          <FacilityEMap 
+            sites={sites}
+            cameras={cameras}
+            selectedSiteId={selectedSiteId}
+            setSelectedSiteId={setSelectedSiteId}
+            events={events}
+            onSelectCamera={(camId) => {
+              setSelectedCameraId(camId);
+              setActiveTab('live');
+            }}
           />
         )}
 

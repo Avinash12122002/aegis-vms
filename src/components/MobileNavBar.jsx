@@ -1,5 +1,5 @@
 import React from 'react';
-import { Video, Film, Cpu, Cloud, Users } from 'lucide-react';
+import { Video, Film, Cpu, Cloud, Users, Map } from 'lucide-react';
 
 export default function MobileNavBar({ activeTab, setActiveTab, onOpenCloudflare, unreadAlerts }) {
   return (
@@ -10,6 +10,14 @@ export default function MobileNavBar({ activeTab, setActiveTab, onOpenCloudflare
       >
         <Video size={18} />
         <span>Live Wall</span>
+      </button>
+
+      <button 
+        className={`mobile-nav-item ${activeTab === 'map' ? 'active' : ''}`}
+        onClick={() => setActiveTab('map')}
+      >
+        <Map size={18} />
+        <span>E-Map</span>
       </button>
 
       <button 

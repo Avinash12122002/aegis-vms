@@ -13,7 +13,9 @@ import {
   Filter,
   Layers,
   ChevronRight,
-  ZoomIn
+  ZoomIn,
+  Grid2X2,
+  Square
 } from 'lucide-react';
 import { CameraStreamSimulator } from '../services/videoSimulator';
 import { sounds } from '../services/soundEffects';
@@ -23,6 +25,7 @@ export default function PlaybackSuite({ cameras, selectedCameraId, setSelectedCa
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [currentTimeSec, setCurrentTimeSec] = useState(14 * 3600 + 25 * 60); // 14:25:00
+  const [isQuadSync, setIsQuadSync] = useState(false); // Synchronized multi-camera playback
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [exportStartTime, setExportStartTime] = useState('14:20:00');
   const [exportEndTime, setExportEndTime] = useState('14:30:00');
@@ -30,27 +33,48 @@ export default function PlaybackSuite({ cameras, selectedCameraId, setSelectedCa
   const [isExporting, setIsExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
 
+  // Canvas refs for single and quad sync
   const canvasRef = useRef(null);
-  const simulatorRef = useRef(null);
+  const quadCanvasRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
+  const simulatorsRef = useRef([]);
   const timelineTrackRef = useRef(null);
 
-  // Active camera
   const currentCamera = cameras.find(c => c.id === selectedCameraId) || cameras[0];
+  const quadCameras = cameras.slice(0, 4);
 
-  // Initialize playback canvas
+  // Initialize playback canvas (Single or Quad-Sync)
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !currentCamera) return;
+    // Clean up previous simulators
+    simulatorsRef.current.forEach(sim => sim.stop());
+    simulatorsRef.current = [];
 
-    canvas.width = 960;
-    canvas.height = 540;
+    if (!isQuadSync) {
+      const canvas = canvasRef.current;
+      if (canvas && currentCamera) {
+        canvas.width = 960;
+        canvas.height = 540;
+        const sim = new CameraStreamSimulator(canvas, currentCamera);
+        simulatorsRef.current = [sim];
+        sim.start();
+      }
+    } else {
+      quadCameras.forEach((cam, idx) => {
+        const canvas = quadCanvasRefs[idx].current;
+        if (canvas) {
+          canvas.width = 480;
+          canvas.height = 270;
+          const sim = new CameraStreamSimulator(canvas, cam);
+          simulatorsRef.current.push(sim);
+          sim.start();
+        }
+      });
+    }
 
-    const sim = new CameraStreamSimulator(canvas, currentCamera);
-    simulatorRef.current = sim;
-    sim.start();
-
-    return () => sim.stop();
-  }, [currentCamera]);
+    return () => {
+      simulatorsRef.current.forEach(sim => sim.stop());
+      simulatorsRef.current = [];
+    };
+  }, [isQuadSync, currentCamera, cameras]);
 
   // Timeline scrubber playback animation
   useEffect(() => {
@@ -98,7 +122,6 @@ export default function PlaybackSuite({ cameras, selectedCameraId, setSelectedCa
     }, 1500);
   };
 
-  // Timeline Progress percentage (0 - 100%)
   const needlePercent = (currentTimeSec / 86400) * 100;
 
   return (
@@ -111,17 +134,60 @@ export default function PlaybackSuite({ cameras, selectedCameraId, setSelectedCa
             <span>Archive Playback</span>
           </div>
 
-          {/* Camera Picker */}
-          <select 
-            className="input-field" 
-            style={{ width: 'auto', padding: '4px 8px', fontSize: '0.75rem', background: 'var(--bg-primary)' }}
-            value={currentCamera.id}
-            onChange={(e) => setSelectedCameraId(e.target.value)}
-          >
-            {cameras.map(c => (
-              <option key={c.id} value={c.id}>📷 {c.name} ({c.location})</option>
-            ))}
-          </select>
+          {/* Single vs Quad Synchronized Playback Switcher */}
+          <div style={{ display: 'flex', background: 'var(--bg-primary)', padding: '2px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+            <button
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '3px 8px',
+                fontSize: '0.72rem',
+                border: 'none',
+                borderRadius: '3px',
+                cursor: 'pointer',
+                background: !isQuadSync ? 'var(--accent-blue)' : 'transparent',
+                color: !isQuadSync ? '#fff' : 'var(--text-secondary)'
+              }}
+              onClick={() => setIsQuadSync(false)}
+            >
+              <Square size={12} />
+              <span>Single</span>
+            </button>
+            <button
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '3px 8px',
+                fontSize: '0.72rem',
+                border: 'none',
+                borderRadius: '3px',
+                cursor: 'pointer',
+                background: isQuadSync ? 'var(--accent-blue)' : 'transparent',
+                color: isQuadSync ? '#fff' : 'var(--text-secondary)'
+              }}
+              onClick={() => setIsQuadSync(true)}
+              title="Synchronized 4-Camera Playback (Exact Timestamp Sync)"
+            >
+              <Grid2X2 size={12} />
+              <span>Quad Sync (4 Cams)</span>
+            </button>
+          </div>
+
+          {/* Camera Picker (When in single mode) */}
+          {!isQuadSync && (
+            <select 
+              className="input-field" 
+              style={{ width: 'auto', padding: '4px 8px', fontSize: '0.75rem', background: 'var(--bg-primary)' }}
+              value={currentCamera.id}
+              onChange={(e) => setSelectedCameraId(e.target.value)}
+            >
+              {cameras.map(c => (
+                <option key={c.id} value={c.id}>📷 {c.name} ({c.location})</option>
+              ))}
+            </select>
+          )}
 
           {/* Date Picker */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -149,31 +215,47 @@ export default function PlaybackSuite({ cameras, selectedCameraId, setSelectedCa
         </div>
       </div>
 
-      {/* Main Playback Video Area */}
-      <div style={{ flex: 1, position: 'relative', background: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <canvas ref={canvasRef} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+      {/* Main Playback Video Area (Single or Quad-Sync Grid) */}
+      <div style={{ flex: 1, position: 'relative', background: '#000000', overflow: 'hidden' }}>
+        {!isQuadSync ? (
+          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+            <canvas ref={canvasRef} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
 
-        {/* Watermark Overlay on Footage */}
-        <div style={{ 
-          position: 'absolute', 
-          top: '16px', 
-          left: '16px', 
-          background: 'rgba(0,0,0,0.6)', 
-          padding: '4px 10px', 
-          borderRadius: '4px',
-          fontFamily: 'var(--font-mono)',
-          fontSize: '0.75rem',
-          color: '#ffffff',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
-        }}>
-          <span style={{ color: 'var(--accent-cyan)', fontWeight: 700 }}>RECORDED FOOTAGE</span>
-          <span>•</span>
-          <span>{selectedDate} {formatSecondsToTime(currentTimeSec)}</span>
-          <span>•</span>
-          <span style={{ color: 'var(--accent-green)' }}>SPEED: {playbackSpeed}x</span>
-        </div>
+            {/* Watermark Overlay on Footage */}
+            <div style={{ 
+              position: 'absolute', 
+              top: '16px', 
+              left: '16px', 
+              background: 'rgba(0,0,0,0.6)', 
+              padding: '4px 10px', 
+              borderRadius: '4px',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.75rem',
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span style={{ color: 'var(--accent-cyan)', fontWeight: 700 }}>{currentCamera.name}</span>
+              <span>•</span>
+              <span>{selectedDate} {formatSecondsToTime(currentTimeSec)}</span>
+              <span>•</span>
+              <span style={{ color: 'var(--accent-green)' }}>SPEED: {playbackSpeed}x</span>
+            </div>
+          </div>
+        ) : (
+          <div style={{ width: '100%', height: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: '4px', padding: '4px' }}>
+            {quadCameras.map((cam, idx) => (
+              <div key={cam.id} style={{ position: 'relative', background: '#05070a', overflow: 'hidden', borderRadius: '4px' }}>
+                <canvas ref={quadCanvasRefs[idx]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(0,0,0,0.7)', padding: '2px 8px', borderRadius: '3px', fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: '#fff' }}>
+                  <span style={{ color: 'var(--accent-cyan)', fontWeight: 600 }}>{cam.name}</span>
+                  <span style={{ marginLeft: '6px', color: 'var(--accent-green)' }}>SYNC</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* SHA-256 Hash Proof Badge */}
         <div style={{
@@ -192,13 +274,12 @@ export default function PlaybackSuite({ cameras, selectedCameraId, setSelectedCa
           gap: '5px'
         }}>
           <ShieldCheck size={12} color="var(--accent-green)" />
-          <span>SHA-256: 8f9b2c...4a10d [AUTHENTICATED]</span>
+          <span>SHA-256: 8f9b2c...4a10d [AUTHENTICATED EVIDENCE]</span>
         </div>
       </div>
 
       {/* 24-Hour Visual Timeline Scrubber */}
       <div className="timeline-scrubber">
-        {/* Scrubber Controls Bar */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
           {/* VCR Playback Controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -281,16 +362,13 @@ export default function PlaybackSuite({ cameras, selectedCameraId, setSelectedCa
           className="timeline-track-container" 
           onClick={handleTimelineClick}
         >
-          {/* Continuous Green Recording Segments */}
           <div className="timeline-segment continuous" style={{ left: '0%', width: '35%' }} />
           <div className="timeline-segment continuous" style={{ left: '42%', width: '45%' }} />
 
-          {/* AI Alarm Red Segments */}
           <div className="timeline-segment motion" style={{ left: '18%', width: '3%' }} title="AI Intrusion at 04:19" />
           <div className="timeline-segment motion" style={{ left: '48%', width: '4%' }} title="Vehicle Line Crossing at 11:30" />
           <div className="timeline-segment motion" style={{ left: '60%', width: '2.5%' }} title="Boundary Motion at 14:24" />
 
-          {/* Active Scrubbing Needle */}
           <div className="timeline-needle" style={{ left: `${needlePercent}%` }} />
         </div>
 
@@ -339,7 +417,7 @@ export default function PlaybackSuite({ cameras, selectedCameraId, setSelectedCa
                 <input 
                   type="text" 
                   disabled 
-                  value={`${currentCamera.name} (${currentCamera.location})`} 
+                  value={isQuadSync ? "Synchronized Quad-Camera Feed (4 Channels)" : `${currentCamera.name} (${currentCamera.location})`} 
                   className="input-field" 
                   style={{ opacity: 0.8 }}
                 />

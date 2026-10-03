@@ -12,7 +12,8 @@ import {
   Minimize, 
   Bell, 
   Menu,
-  Server
+  Server,
+  Map
 } from 'lucide-react';
 import { sounds } from '../services/soundEffects';
 
@@ -101,6 +102,13 @@ export default function Header({
         >
           <Video size={16} />
           <span>Live Wall</span>
+        </button>
+        <button 
+          className={`nav-tab-btn ${activeTab === 'map' ? 'active' : ''}`}
+          onClick={() => setActiveTab('map')}
+        >
+          <Map size={16} />
+          <span>Facility E-Map</span>
         </button>
         <button 
           className={`nav-tab-btn ${activeTab === 'playback' ? 'active' : ''}`}
