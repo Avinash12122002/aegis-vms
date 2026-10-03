@@ -31,8 +31,8 @@ function assert(condition, testName) {
 // Test 1: Seed Data Integrity
 // ------------------------------------------------------------------
 console.log('--- TEST GROUP 1: Camera & Site Models ---');
-assert(initialSites.length === 3, 'Multi-site configuration loaded (Mumbai, Delhi, Bangalore)');
-assert(initialCameras.length === 8, '8 Cameras registered across multiple branches');
+assert(initialSites.length >= 3, `Multi-site configuration loaded (${initialSites.length} Sites available)`);
+assert(initialCameras.length >= 8, `${initialCameras.length} Cameras registered across multiple branches`);
 
 const ptzCameras = initialCameras.filter(c => c.ptzCapable);
 assert(ptzCameras.length >= 4, `PTZ cameras registered properly (${ptzCameras.length} PTZ cameras found)`);

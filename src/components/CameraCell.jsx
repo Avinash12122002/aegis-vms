@@ -40,6 +40,17 @@ export default function CameraCell({
 
   // Initialize and run stream simulator
   useEffect(() => {
+    if (camera.liveStreamUrl) {
+      // Real Camera Feed - update OSD timecode only
+      const timer = setInterval(() => {
+        const d = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        const ms = String(d.getMilliseconds()).padStart(3, '0');
+        setTimecode(`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${ms}`);
+      }, 100);
+      return () => clearInterval(timer);
+    }
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -73,7 +84,7 @@ export default function CameraCell({
       clearInterval(timer);
       sim.stop();
     };
-  }, [camera.id, streamQuality, isMaximized]);
+  }, [camera.id, camera.liveStreamUrl, streamQuality, isMaximized]);
 
   // Update tripwires dynamically
   useEffect(() => {
@@ -109,7 +120,26 @@ export default function CameraCell({
       onDoubleClick={onToggleMaximize}
     >
       <div className="camera-video-wrapper">
-        <canvas ref={canvasRef} className="camera-canvas" />
+        {camera.liveStreamUrl ? (
+          <iframe 
+            src={camera.liveStreamUrl} 
+            className="camera-canvas"
+            style={{ 
+              border: 'none', 
+              width: '100%', 
+              height: '100%', 
+              position: 'absolute', 
+              top: 0, 
+              left: 0, 
+              background: '#000',
+              pointerEvents: 'none' 
+            }}
+            title={camera.name}
+            allow="autoplay; encrypted-media"
+          />
+        ) : (
+          <canvas ref={canvasRef} className="camera-canvas" />
+        )}
 
         {/* On-Screen Display (OSD) Overlay */}
         <div className="osd-overlay">
