@@ -18,7 +18,7 @@ export default function CameraHealthDiagnostics({ cameras, onToggleCameraStatus 
   };
 
   return (
-    <div style={{ display: 'flex', flex: 1, flexDirection: 'column', overflow: 'hidden', background: 'var(--bg-primary)' }}>
+    <div style={{ display: 'flex', flex: 1, flexDirection: 'column', minHeight: 0, minWidth: 0, height: '100%', overflow: 'hidden', background: 'var(--bg-primary)' }}>
       {/* Header Toolbar */}
       <div className="control-toolbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

@@ -228,7 +228,7 @@ export default function LiveVideoWall({
       )}
 
       {/* Main Grid View Wall */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
+      <div className="video-grid-wrapper" style={{ display: 'flex', flex: 1, minHeight: 0, height: '100%', overflow: 'hidden', position: 'relative' }}>
         <div className={`video-grid grid-${maximizedCamId ? '1' : gridMode}`}>
           {displayCameras.map(camera => {
             const isAlarming = unreadEvents.some(e => e.cameraId === camera.id);

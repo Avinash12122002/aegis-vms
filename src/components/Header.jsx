@@ -167,35 +167,32 @@ export default function Header({
 
         {/* AI Smart Search */}
         <button 
-          className="btn btn-secondary" 
-          style={{ padding: '5px 10px', fontSize: '0.75rem', gap: '6px' }}
+          className="btn btn-secondary header-action-btn" 
           onClick={onOpenForensicModal}
           title="AI Smart Attribute Search (Person, Vehicle, Color, Plates)"
         >
-          <Sparkles size={15} color="var(--accent-cyan)" />
-          <span>AI Search</span>
+          <Sparkles size={14} color="var(--accent-cyan)" />
+          <span className="header-btn-label">AI Search</span>
         </button>
 
         {/* Cloudflare Status Pill */}
         <button 
-          className="btn btn-secondary" 
-          style={{ padding: '5px 10px', fontSize: '0.75rem', gap: '6px' }}
+          className="btn btn-secondary header-action-btn" 
           onClick={onOpenCloudflareModal}
           title="Cloudflare R2 Storage & Zero-Trust Tunnel"
         >
-          <Cloud size={15} color="var(--accent-cyan)" />
-          <span style={{ color: 'var(--accent-cyan)' }}>Cloudflare R2</span>
+          <Cloud size={14} color="var(--accent-cyan)" />
+          <span className="header-btn-label" style={{ color: 'var(--accent-cyan)' }}>Cloudflare R2</span>
         </button>
 
         {/* User RBAC */}
         <button 
-          className="btn btn-secondary"
-          style={{ padding: '5px 10px', fontSize: '0.75rem', gap: '6px' }}
+          className="btn btn-secondary header-action-btn"
           onClick={onOpenUserModal}
           title="User Management & RBAC Permissions"
         >
-          <Users size={15} />
-          <span>Super Admin</span>
+          <Users size={14} />
+          <span className="header-btn-label">Super Admin</span>
         </button>
 
         {/* Sound Toggle */}

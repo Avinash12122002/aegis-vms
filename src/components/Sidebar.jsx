@@ -88,7 +88,7 @@ export default function Sidebar({
       </div>
 
       {/* Camera Hierarchical List */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '12px' }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px' }}>
         {sites
           .filter(site => selectedSiteId === 'all' || site.id === selectedSiteId)
           .map(site => {

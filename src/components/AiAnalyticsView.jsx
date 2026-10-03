@@ -118,9 +118,9 @@ export default function AiAnalyticsView({
   const cameraTripwires = tripwires.filter(t => t.cameraId === currentCamera.id);
 
   return (
-    <div style={{ display: 'flex', flex: 1, overflow: 'hidden', background: 'var(--bg-primary)' }}>
+    <div style={{ display: 'flex', flex: 1, minHeight: 0, minWidth: 0, height: '100%', overflow: 'hidden', background: 'var(--bg-primary)' }}>
       {/* Left Canvas & Interactive Drawing Area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border-subtle)' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0, height: '100%', overflow: 'hidden', borderRight: '1px solid var(--border-subtle)' }}>
         {/* Subheader Toolbar */}
         <div className="control-toolbar">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

@@ -50,9 +50,9 @@ export default function FacilityEMap({
   };
 
   return (
-    <div style={{ display: 'flex', flex: 1, overflow: 'hidden', background: 'var(--bg-primary)' }}>
+    <div style={{ display: 'flex', flex: 1, minHeight: 0, minWidth: 0, height: '100%', overflow: 'hidden', background: 'var(--bg-primary)' }}>
       {/* Main E-Map Canvas */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', minHeight: 0, minWidth: 0, height: '100%', overflow: 'hidden' }}>
         {/* Top E-Map Controls */}
         <div className="control-toolbar">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

@@ -261,13 +261,13 @@ export default function PlaybackSuite({
             </div>
           </div>
         ) : (
-          <div style={{ width: '100%', height: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: '4px', padding: '4px' }}>
+          <div style={{ width: '100%', height: '100%', display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gridTemplateRows: 'repeat(2, minmax(0, 1fr))', gap: '4px', padding: '4px', minHeight: 0, minWidth: 0, overflow: 'hidden' }}>
             {quadCameras.map((cam, idx) => {
               const refs = [quad0Ref, quad1Ref, quad2Ref, quad3Ref];
               return (
-                <div key={cam.id} style={{ position: 'relative', background: '#05070a', overflow: 'hidden', borderRadius: '4px' }}>
-                  <canvas ref={refs[idx]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(0,0,0,0.7)', padding: '2px 8px', borderRadius: '3px', fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: '#fff' }}>
+                <div key={cam.id} style={{ position: 'relative', background: '#05070a', overflow: 'hidden', borderRadius: '4px', minHeight: 0, minWidth: 0, height: '100%', width: '100%' }}>
+                  <canvas ref={refs[idx]} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
+                  <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(0,0,0,0.7)', padding: '2px 8px', borderRadius: '3px', fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: '#fff', zIndex: 2 }}>
                     <span style={{ color: 'var(--accent-cyan)', fontWeight: 600 }}>{cam.name}</span>
                     <span style={{ marginLeft: '6px', color: 'var(--accent-green)' }}>SYNC</span>
                   </div>
