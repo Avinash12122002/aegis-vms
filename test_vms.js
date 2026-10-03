@@ -1,0 +1,107 @@
+// Automated Unit & Feature Validation Suite for AegisVMS
+
+import { initialSites, initialCameras, initialTripwires, initialCloudflareConfig, initialUsers } from './src/services/mockData.js';
+import { CameraStreamSimulator } from './src/services/videoSimulator.js';
+
+console.log('====================================================');
+console.log('🧪 RUNNING AEGIS VMS AUTOMATED TEST SUITE');
+console.log('====================================================\n');
+
+let passedTests = 0;
+let failedTests = 0;
+
+function assert(condition, testName) {
+  if (condition) {
+    console.log(`✅ PASS: ${testName}`);
+    passedTests++;
+  } else {
+    console.error(`❌ FAIL: ${testName}`);
+    failedTests++;
+  }
+}
+
+// ------------------------------------------------------------------
+// Test 1: Seed Data Integrity
+// ------------------------------------------------------------------
+console.log('--- TEST GROUP 1: Camera & Site Models ---');
+assert(initialSites.length === 3, 'Multi-site configuration loaded (Mumbai, Delhi, Bangalore)');
+assert(initialCameras.length === 8, '8 Cameras registered across multiple branches');
+
+const ptzCameras = initialCameras.filter(c => c.ptzCapable);
+assert(ptzCameras.length >= 4, `PTZ cameras registered properly (${ptzCameras.length} PTZ cameras found)`);
+
+const rtspValid = initialCameras.every(c => c.rtspUrl.startsWith('rtsp://') && c.onvifPort > 0);
+assert(rtspValid, 'All cameras have valid RTSP URLs and ONVIF ports');
+
+// ------------------------------------------------------------------
+// Test 2: Cloudflare R2 & Zero-Egress Economics
+// ------------------------------------------------------------------
+console.log('\n--- TEST GROUP 2: Cloudflare R2 Configuration ---');
+assert(initialCloudflareConfig.egressCostUSD === 0.00, 'Cloudflare R2 verified with $0 Zero-Egress fees');
+assert(initialCloudflareConfig.usedStorageTB === 1.34, 'Cloud storage tracking 1.34 TB used');
+const calculatedCost = initialCloudflareConfig.usedStorageTB * 15.0;
+assert(Math.abs(calculatedCost - initialCloudflareConfig.monthlyCostUSD) < 0.01, 'Storage billing matches $15 / TB monthly tier');
+assert(initialCloudflareConfig.tunnelStatus === 'healthy', 'Cloudflare Zero Trust Tunnel is healthy');
+
+// ------------------------------------------------------------------
+// Test 3: PTZ Boundary Clamping
+// ------------------------------------------------------------------
+console.log('\n--- TEST GROUP 3: PTZ Joystick Math & Clamping ---');
+const dummyCanvas = { width: 960, height: 540, getContext: () => ({}) };
+const sim = new CameraStreamSimulator(dummyCanvas, initialCameras[0]);
+
+// Test Clamping
+sim.updatePTZ(200, 150, 10);
+assert(sim.pan === 100, 'PTZ Pan clamped to maximum limit (+100)');
+assert(sim.tilt === 60, 'PTZ Tilt clamped to maximum limit (+60)');
+assert(sim.zoom === 4.0, 'PTZ Zoom clamped to optical limit (4.0x)');
+
+sim.updatePTZ(-500, -300, 0.2);
+assert(sim.pan === -100, 'PTZ Pan clamped to minimum limit (-100)');
+assert(sim.tilt === -60, 'PTZ Tilt clamped to minimum limit (-60)');
+assert(sim.zoom === 1.0, 'PTZ Zoom clamped to minimum wide limit (1.0x)');
+
+// ------------------------------------------------------------------
+// Test 4: AI Virtual Tripwire Collision Math
+// ------------------------------------------------------------------
+console.log('\n--- TEST GROUP 4: AI Tripwire Intersection Math ---');
+// Line from (10, 100) to (900, 100) (horizontal line at y = 100)
+const v = { x: 10, y: 100 };
+const w = { x: 900, y: 100 };
+
+// Point directly on the line
+const pOnLine = { x: 450, y: 100 };
+const distZero = sim.distToSegment(pOnLine, v, w);
+assert(Math.round(distZero) === 0, 'Distance to segment is 0 for point on line');
+
+// Point 10px above the line
+const pNear = { x: 450, y: 90 };
+const distNear = sim.distToSegment(pNear, v, w);
+assert(Math.round(distNear) === 10, 'Distance calculation accurately reports 10px offset');
+
+// Point far from the line
+const pFar = { x: 450, y: 350 };
+const distFar = sim.distToSegment(pFar, v, w);
+assert(distFar > 50, 'Distance calculation reports far point correctly');
+
+// ------------------------------------------------------------------
+// Test 5: Role-Based Access Control (RBAC)
+// ------------------------------------------------------------------
+console.log('\n--- TEST GROUP 5: Enterprise RBAC Matrix ---');
+const admin = initialUsers.find(u => u.role === 'Super Admin');
+const guard = initialUsers.find(u => u.role === 'Security Guard');
+const auditor = initialUsers.find(u => u.role === 'Auditor');
+
+assert(admin !== undefined && admin.sites.includes('All Sites'), 'Super Admin has access to All Sites');
+assert(guard !== undefined, 'Security Guard role exists');
+assert(auditor !== undefined, 'Auditor compliance role exists');
+
+console.log('\n====================================================');
+console.log(`🏁 TEST SUMMARY: ${passedTests} PASSED, ${failedTests} FAILED`);
+console.log('====================================================');
+
+if (failedTests > 0) {
+  process.exit(1);
+} else {
+  process.exit(0);
+}
