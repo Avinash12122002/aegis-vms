@@ -2,13 +2,10 @@ import React, { useState } from 'react';
 import { 
   Camera, 
   Search, 
-  Wifi, 
   Check, 
   Plus, 
-  Compass, 
-  Cpu, 
   Activity,
-  AlertCircle
+  X
 } from 'lucide-react';
 import { sounds } from '../services/soundEffects';
 
@@ -109,9 +106,10 @@ export default function AddCameraModal({ sites, onAddCamera, onClose }) {
           </div>
           <button 
             onClick={onClose}
-            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            title="Close Modal"
           >
-            ✕
+            <X size={18} />
           </button>
         </div>
 

@@ -1,14 +1,7 @@
 import React, { useState } from 'react';
 import { 
-  Users, 
   ShieldCheck, 
-  Lock, 
-  FileText, 
-  UserPlus, 
-  Key, 
-  Check, 
-  X,
-  History
+  X
 } from 'lucide-react';
 
 export default function UserManagementModal({ users, onClose }) {
@@ -32,9 +25,10 @@ export default function UserManagementModal({ users, onClose }) {
           </div>
           <button 
             onClick={onClose}
-            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            title="Close Modal"
           >
-            ✕
+            <X size={18} />
           </button>
         </div>
 

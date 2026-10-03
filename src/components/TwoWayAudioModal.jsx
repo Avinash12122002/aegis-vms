@@ -4,10 +4,7 @@ import {
   MicOff, 
   Volume2, 
   Radio, 
-  X, 
-  ShieldAlert, 
-  Activity,
-  VolumeX
+  X
 } from 'lucide-react';
 import { sounds } from '../services/soundEffects';
 
@@ -18,16 +15,13 @@ export default function TwoWayAudioModal({ camera, onClose }) {
 
   // Audio VU meter simulation while talking
   useEffect(() => {
-    let anim = null;
-    if (isTalking) {
-      anim = setInterval(() => {
-        setVuLevel(Math.floor(Math.random() * 60) + 35);
-      }, 100);
-    } else {
-      setVuLevel(0);
-    }
+    if (!isTalking) return;
+    const anim = setInterval(() => {
+      setVuLevel(Math.floor(Math.random() * 60) + 35);
+    }, 100);
     return () => {
-      if (anim) clearInterval(anim);
+      clearInterval(anim);
+      setVuLevel(0);
     };
   }, [isTalking]);
 
@@ -51,9 +45,10 @@ export default function TwoWayAudioModal({ camera, onClose }) {
           </div>
           <button 
             onClick={onClose}
-            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            title="Close Modal"
           >
-            ✕
+            <X size={18} />
           </button>
         </div>
 
@@ -107,7 +102,7 @@ export default function TwoWayAudioModal({ camera, onClose }) {
           }}>
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map((bar) => {
               const height = isTalking 
-                ? Math.min(36, Math.max(6, Math.sin(bar * 0.8 + Date.now()) * (vuLevel * 0.4) + (vuLevel * 0.3)))
+                ? Math.min(36, Math.max(6, Math.sin(bar * 0.8 + vuLevel) * (vuLevel * 0.4) + (vuLevel * 0.3)))
                 : 4;
               return (
                 <div 

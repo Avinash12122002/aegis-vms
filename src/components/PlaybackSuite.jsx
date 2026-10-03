@@ -2,18 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Play, 
   Pause, 
-  RotateCcw, 
   FastForward, 
   Rewind, 
   Calendar, 
   Download, 
   Film, 
-  Clock, 
   ShieldCheck, 
-  Filter,
-  Layers,
-  ChevronRight,
-  ZoomIn,
   Grid2X2,
   Square
 } from 'lucide-react';
@@ -24,14 +18,13 @@ export default function PlaybackSuite({
   cameras, 
   selectedCameraId, 
   setSelectedCameraId, 
-  sites,
   playbackJumpTarget 
 }) {
   const [selectedDate, setSelectedDate] = useState('2026-10-03');
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
-  const [currentTimeSec, setCurrentTimeSec] = useState(14 * 3600 + 25 * 60); // 14:25:00
-  const [isQuadSync, setIsQuadSync] = useState(false); // Synchronized multi-camera playback
+  const [currentTimeSec, setCurrentTimeSec] = useState(14 * 3600 + 25 * 60);
+  const [isQuadSync, setIsQuadSync] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [exportStartTime, setExportStartTime] = useState('14:20:00');
   const [exportEndTime, setExportEndTime] = useState('14:30:00');
@@ -41,7 +34,8 @@ export default function PlaybackSuite({
 
   // Jump to specific timestamp when triggered from Forensic Search
   useEffect(() => {
-    if (playbackJumpTarget) {
+    if (!playbackJumpTarget) return;
+    const timer = setTimeout(() => {
       if (playbackJumpTarget.date) setSelectedDate(playbackJumpTarget.date);
       if (playbackJumpTarget.time) {
         const parts = playbackJumpTarget.time.split(':').map(Number);
@@ -49,12 +43,16 @@ export default function PlaybackSuite({
           setCurrentTimeSec(parts[0] * 3600 + parts[1] * 60 + parts[2]);
         }
       }
-    }
+    }, 0);
+    return () => clearTimeout(timer);
   }, [playbackJumpTarget]);
 
   // Canvas refs for single and quad sync
   const canvasRef = useRef(null);
-  const quadCanvasRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
+  const quad0Ref = useRef(null);
+  const quad1Ref = useRef(null);
+  const quad2Ref = useRef(null);
+  const quad3Ref = useRef(null);
   const simulatorsRef = useRef([]);
   const timelineTrackRef = useRef(null);
 
@@ -63,7 +61,6 @@ export default function PlaybackSuite({
 
   // Initialize playback canvas (Single or Quad-Sync)
   useEffect(() => {
-    // Clean up previous simulators
     simulatorsRef.current.forEach(sim => sim.stop());
     simulatorsRef.current = [];
 
@@ -77,8 +74,9 @@ export default function PlaybackSuite({
         sim.start();
       }
     } else {
+      const refs = [quad0Ref, quad1Ref, quad2Ref, quad3Ref];
       quadCameras.forEach((cam, idx) => {
-        const canvas = quadCanvasRefs[idx].current;
+        const canvas = refs[idx]?.current;
         if (canvas) {
           canvas.width = 480;
           canvas.height = 270;
@@ -93,7 +91,7 @@ export default function PlaybackSuite({
       simulatorsRef.current.forEach(sim => sim.stop());
       simulatorsRef.current = [];
     };
-  }, [isQuadSync, currentCamera, cameras]);
+  }, [isQuadSync, currentCamera, quadCameras]);
 
   // Timeline scrubber playback animation
   useEffect(() => {
@@ -264,15 +262,18 @@ export default function PlaybackSuite({
           </div>
         ) : (
           <div style={{ width: '100%', height: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: '4px', padding: '4px' }}>
-            {quadCameras.map((cam, idx) => (
-              <div key={cam.id} style={{ position: 'relative', background: '#05070a', overflow: 'hidden', borderRadius: '4px' }}>
-                <canvas ref={quadCanvasRefs[idx]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(0,0,0,0.7)', padding: '2px 8px', borderRadius: '3px', fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: '#fff' }}>
-                  <span style={{ color: 'var(--accent-cyan)', fontWeight: 600 }}>{cam.name}</span>
-                  <span style={{ marginLeft: '6px', color: 'var(--accent-green)' }}>SYNC</span>
+            {quadCameras.map((cam, idx) => {
+              const refs = [quad0Ref, quad1Ref, quad2Ref, quad3Ref];
+              return (
+                <div key={cam.id} style={{ position: 'relative', background: '#05070a', overflow: 'hidden', borderRadius: '4px' }}>
+                  <canvas ref={refs[idx]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(0,0,0,0.7)', padding: '2px 8px', borderRadius: '3px', fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: '#fff' }}>
+                    <span style={{ color: 'var(--accent-cyan)', fontWeight: 600 }}>{cam.name}</span>
+                    <span style={{ marginLeft: '6px', color: 'var(--accent-green)' }}>SYNC</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 

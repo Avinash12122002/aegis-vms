@@ -1,14 +1,9 @@
 import React, { useState } from 'react';
 import { 
   Map, 
-  MapPin, 
   Radio, 
-  Eye, 
-  AlertTriangle, 
-  Layers, 
   ZoomIn, 
   ZoomOut, 
-  Compass,
   X
 } from 'lucide-react';
 import { sounds } from '../services/soundEffects';
@@ -21,16 +16,10 @@ export default function FacilityEMap({
   events,
   onSelectCamera 
 }) {
-  const [activeSite, setActiveSite] = useState(selectedSiteId === 'all' ? 'site-1' : selectedSiteId);
+  const [internalSite, setInternalSite] = useState('site-1');
+  const activeSite = selectedSiteId !== 'all' ? selectedSiteId : internalSite;
   const [previewCamera, setPreviewCamera] = useState(null);
   const [mapZoom, setMapZoom] = useState(1.0);
-
-  // Sync active site if changed from header dropdown
-  React.useEffect(() => {
-    if (selectedSiteId !== 'all') {
-      setActiveSite(selectedSiteId);
-    }
-  }, [selectedSiteId]);
 
   // Filter cameras belonging to the active site
   const siteCameras = cameras.filter(c => c.siteId === activeSite);
@@ -70,7 +59,7 @@ export default function FacilityEMap({
               className="input-field" 
               style={{ width: 'auto', padding: '4px 8px', fontSize: '0.75rem', background: 'var(--bg-primary)' }}
               value={activeSite}
-              onChange={(e) => setActiveSite(e.target.value)}
+              onChange={(e) => { setInternalSite(e.target.value); if (setSelectedSiteId) setSelectedSiteId(e.target.value); }}
             >
               {sites.map(s => (
                 <option key={s.id} value={s.id}>📍 {s.name} ({s.code})</option>

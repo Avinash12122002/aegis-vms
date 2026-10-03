@@ -30,7 +30,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Entities & State
-  const [sites, setSites] = useState(initialSites);
+  const [sites] = useState(initialSites);
   const [cameras, setCameras] = useState(() => {
     const saved = localStorage.getItem('aegis_cameras');
     return saved ? JSON.parse(saved) : initialCameras;
@@ -49,7 +49,7 @@ export default function App() {
 
   // Settings & RBAC
   const [cloudflareConfig, setCloudflareConfig] = useState(initialCloudflareConfig);
-  const [users, setUsers] = useState(initialUsers);
+  const [users] = useState(initialUsers);
   const [forensicRecords] = useState(initialForensicRecords);
 
   // Modals

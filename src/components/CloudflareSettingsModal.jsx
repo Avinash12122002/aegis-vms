@@ -1,14 +1,10 @@
 import React, { useState } from 'react';
 import { 
   Cloud, 
-  HardDrive, 
   ShieldCheck, 
   Terminal, 
   Save, 
-  ExternalLink, 
-  RefreshCw,
-  Clock,
-  DollarSign
+  X
 } from 'lucide-react';
 
 export default function CloudflareSettingsModal({ config, onSaveConfig, onClose }) {
@@ -34,9 +30,10 @@ export default function CloudflareSettingsModal({ config, onSaveConfig, onClose 
           </div>
           <button 
             onClick={onClose}
-            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            title="Close Modal"
           >
-            ✕
+            <X size={18} />
           </button>
         </div>
 

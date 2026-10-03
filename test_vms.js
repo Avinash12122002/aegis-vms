@@ -71,6 +71,7 @@ assert(sim.zoom === 1.0, 'PTZ Zoom clamped to minimum wide limit (1.0x)');
 // Test 4: AI Virtual Tripwire Collision Math
 // ------------------------------------------------------------------
 console.log('\n--- TEST GROUP 4: AI Tripwire Intersection Math ---');
+assert(initialTripwires.length > 0, 'Virtual tripwire rules initialized across perimeter cameras');
 const v = { x: 10, y: 100 };
 const w = { x: 900, y: 100 };
 

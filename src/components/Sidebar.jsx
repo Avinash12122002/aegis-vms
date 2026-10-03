@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
 import { 
-  Camera, 
   Search, 
   PlusCircle, 
   HardDrive, 
-  Layers, 
-  Compass, 
-  CheckCircle2, 
-  X,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Compass,
+  X
 } from 'lucide-react';
 
 export default function Sidebar({ 
@@ -51,15 +48,27 @@ export default function Sidebar({
       <div className="sidebar-section">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
           <span className="sidebar-title" style={{ margin: 0 }}>Device Registry</span>
-          <button 
-            className="btn btn-primary"
-            style={{ padding: '4px 8px', fontSize: '0.72rem' }}
-            onClick={onAddCameraClick}
-            title="Add New IP Camera via ONVIF/RTSP"
-          >
-            <PlusCircle size={14} />
-            <span>Add Cam</span>
-          </button>
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <button 
+              className="btn btn-primary"
+              style={{ padding: '4px 8px', fontSize: '0.72rem' }}
+              onClick={onAddCameraClick}
+              title="Add New IP Camera via ONVIF/RTSP"
+            >
+              <PlusCircle size={14} />
+              <span>Add Cam</span>
+            </button>
+            {onClose && (
+              <button 
+                className="btn btn-secondary mobile-only"
+                style={{ padding: '4px 8px' }}
+                onClick={onClose}
+                title="Close Sidebar"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
         </div>
 
         <div style={{ position: 'relative' }}>

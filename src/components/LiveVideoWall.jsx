@@ -7,11 +7,7 @@ import {
   Compass, 
   AlertTriangle, 
   Bell, 
-  Check, 
-  Eye, 
-  Sparkles,
-  SlidersHorizontal,
-  Layers
+  Check
 } from 'lucide-react';
 import CameraCell from './CameraCell';
 import PTZController from './PTZController';

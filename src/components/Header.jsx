@@ -10,9 +10,7 @@ import {
   VolumeX, 
   Maximize, 
   Minimize, 
-  Bell, 
   Menu,
-  Server,
   Map,
   Activity,
   Sparkles
@@ -25,7 +23,7 @@ export default function Header({
   sites, 
   selectedSiteId, 
   setSelectedSiteId,
-  unreadAlertCount,
+  unreadAlertCount = 0,
   onOpenCloudflareModal,
   onOpenUserModal,
   onOpenForensicModal,
@@ -34,7 +32,7 @@ export default function Header({
   setSoundMuted
 }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState(() => new Date());
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -102,9 +100,23 @@ export default function Header({
         <button 
           className={`nav-tab-btn ${activeTab === 'live' ? 'active' : ''}`}
           onClick={() => setActiveTab('live')}
+          style={{ position: 'relative' }}
         >
           <Video size={16} />
           <span>Live Wall</span>
+          {unreadAlertCount > 0 && (
+            <span style={{
+              background: 'var(--accent-danger)',
+              color: '#fff',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              padding: '1px 5px',
+              borderRadius: '10px',
+              marginLeft: '4px'
+            }}>
+              {unreadAlertCount}
+            </span>
+          )}
         </button>
         <button 
           className={`nav-tab-btn ${activeTab === 'map' ? 'active' : ''}`}

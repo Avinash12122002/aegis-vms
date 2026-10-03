@@ -1,16 +1,8 @@
 import React, { useState } from 'react';
 import { 
   Activity, 
-  Wifi, 
   WifiOff, 
-  Thermometer, 
-  Clock, 
-  HardDrive, 
-  ShieldCheck, 
-  AlertTriangle,
-  RotateCcw,
-  Zap,
-  CheckCircle2
+  RotateCcw
 } from 'lucide-react';
 import { sounds } from '../services/soundEffects';
 

@@ -1,16 +1,10 @@
 import React, { useState } from 'react';
 import { 
-  Search, 
-  Filter, 
   User, 
   Truck, 
-  Calendar, 
-  Clock, 
   Play, 
-  Tag, 
   Sparkles, 
-  X,
-  CheckCircle2
+  X
 } from 'lucide-react';
 import { sounds } from '../services/soundEffects';
 
@@ -43,9 +37,10 @@ export default function ForensicSearchModal({ forensicRecords, onJumpToPlayback,
           </div>
           <button 
             onClick={onClose}
-            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            title="Close Modal"
           >
-            ✕
+            <X size={18} />
           </button>
         </div>
 

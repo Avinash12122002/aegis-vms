@@ -123,6 +123,20 @@ export default function PTZController({ camera, onUpdatePTZ, onClose }) {
         </button>
       </div>
 
+      {/* Speed Slider */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+        <Sliders size={12} />
+        <span>Pan Speed: {speed}</span>
+        <input 
+          type="range" 
+          min="5" 
+          max="30" 
+          value={speed} 
+          onChange={(e) => setSpeed(Number(e.target.value))} 
+          style={{ flex: 1, accentColor: 'var(--accent-cyan)' }}
+        />
+      </div>
+
       {/* Current Position Telemetry */}
       <div style={{ 
         fontFamily: 'var(--font-mono)', 

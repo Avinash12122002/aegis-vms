@@ -37,7 +37,6 @@ export class CameraStreamSimulator {
 
   initSceneObjects() {
     const list = [];
-    const seed = this.camera.id.charCodeAt(this.camera.id.length - 1);
     
     // Scene-specific animated actors
     if (this.camera.sceneType === 'gate' || this.camera.sceneType === 'parking') {
@@ -294,7 +293,6 @@ export class CameraStreamSimulator {
 
   updateAndDrawObjects(w, h) {
     const { ctx } = this;
-    const now = Date.now();
 
     this.objects.forEach(obj => {
       // Movement logic

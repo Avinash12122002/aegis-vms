@@ -6,10 +6,6 @@ import {
   Compass, 
   Volume2, 
   VolumeX, 
-  Radio, 
-  Download, 
-  Sparkles,
-  Wifi,
   Mic
 } from 'lucide-react';
 import { CameraStreamSimulator } from '../services/videoSimulator';
@@ -23,13 +19,22 @@ export default function CameraCell({
   isMaximized,
   onOpenPTZ,
   onOpenIntercom,
-  streamQuality = 'sub', // 'sub' (faster) or 'main' (4K/HD)
+  streamQuality = 'sub',
   tripwires = [],
   onAlarmTrigger,
   isAlarming = false
 }) {
   const canvasRef = useRef(null);
   const simulatorRef = useRef(null);
+  const onAlarmTriggerRef = useRef(onAlarmTrigger);
+  const tripwiresRef = useRef(tripwires);
+  const cameraRef = useRef(camera);
+
+  useEffect(() => {
+    onAlarmTriggerRef.current = onAlarmTrigger;
+    tripwiresRef.current = tripwires;
+    cameraRef.current = camera;
+  });
   const [timecode, setTimecode] = useState('');
   const [isMuted, setIsMuted] = useState(true);
 
@@ -38,19 +43,17 @@ export default function CameraCell({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Set resolution based on grid mode (main vs sub stream)
-    const dpr = window.devicePixelRatio || 1;
     const targetW = isMaximized || streamQuality === 'main' ? 960 : 480;
     const targetH = isMaximized || streamQuality === 'main' ? 540 : 270;
     canvas.width = targetW;
     canvas.height = targetH;
 
-    const sim = new CameraStreamSimulator(canvas, camera, {
-      tripwires,
+    const sim = new CameraStreamSimulator(canvas, cameraRef.current, {
+      tripwires: tripwiresRef.current,
       onTripwireCross: (event) => {
         sounds.playAlarm();
-        if (onAlarmTrigger) {
-          onAlarmTrigger(event);
+        if (onAlarmTriggerRef.current) {
+          onAlarmTriggerRef.current(event);
         }
       }
     });
@@ -181,7 +184,10 @@ export default function CameraCell({
           {camera.twoWayAudioCapable && (
             <button 
               className="cam-icon-btn" 
-              onClick={(e) => { e.stopPropagation(); onOpenIntercom && onOpenIntercom(camera); }}
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                if (onOpenIntercom) onOpenIntercom(camera); 
+              }}
               title="Push-to-Talk Intercom (Speak through camera speaker)"
               style={{ color: 'var(--accent-cyan)' }}
             >

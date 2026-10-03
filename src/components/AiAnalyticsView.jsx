@@ -5,13 +5,7 @@ import {
   Trash2, 
   Check, 
   Zap, 
-  Sliders, 
-  ShieldAlert, 
-  Eye, 
-  ArrowRightLeft,
-  UserCheck,
-  Truck,
-  RotateCcw
+  Sliders
 } from 'lucide-react';
 import { CameraStreamSimulator } from '../services/videoSimulator';
 import { sounds } from '../services/soundEffects';
@@ -36,6 +30,13 @@ export default function AiAnalyticsView({
   const canvasRef = useRef(null);
   const drawOverlayRef = useRef(null);
   const simulatorRef = useRef(null);
+  const tripwiresRef = useRef(tripwires);
+  const currentCameraRef = useRef(currentCamera);
+
+  useEffect(() => {
+    tripwiresRef.current = tripwires;
+    currentCameraRef.current = currentCamera;
+  });
 
   // Initialize canvas stream
   useEffect(() => {
@@ -45,9 +46,9 @@ export default function AiAnalyticsView({
     canvas.width = 960;
     canvas.height = 540;
 
-    const sim = new CameraStreamSimulator(canvas, currentCamera, {
-      tripwires,
-      onTripwireCross: (ev) => {
+    const sim = new CameraStreamSimulator(canvas, currentCameraRef.current, {
+      tripwires: tripwiresRef.current,
+      onTripwireCross: (_ev) => {
         sounds.playAlarm();
       }
     });
@@ -56,7 +57,7 @@ export default function AiAnalyticsView({
     sim.start();
 
     return () => sim.stop();
-  }, [currentCamera.id]);
+  }, [currentCamera]);
 
   // Update tripwires dynamically without tearing down canvas loop
   useEffect(() => {
@@ -138,8 +139,42 @@ export default function AiAnalyticsView({
             {isDrawing ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '0.75rem', color: 'var(--accent-amber)', animation: 'pulse-red 1.5s infinite' }}>
-                  Click 2 points on video to place Tripwire ({drawPoints.length}/2)
+                  Click 2 points on video ({drawPoints.length}/2)
                 </span>
+                <select
+                  className="input-field"
+                  style={{ padding: '3px 6px', fontSize: '0.7rem', width: 'auto' }}
+                  value={targetClass}
+                  onChange={(e) => setTargetClass(e.target.value)}
+                  title="Target Classification"
+                >
+                  <option value="both">All Targets</option>
+                  <option value="person">Persons Only</option>
+                  <option value="vehicle">Vehicles Only</option>
+                </select>
+                <select
+                  className="input-field"
+                  style={{ padding: '3px 6px', fontSize: '0.7rem', width: 'auto' }}
+                  value={direction}
+                  onChange={(e) => setDirection(e.target.value)}
+                  title="Tripwire Direction"
+                >
+                  <option value="BOTH">Bi-Directional</option>
+                  <option value="A_TO_B">A → B Only</option>
+                  <option value="B_TO_A">B → A Only</option>
+                </select>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                  <span>{sensitivity}%</span>
+                  <input
+                    type="range"
+                    min="50"
+                    max="99"
+                    value={sensitivity}
+                    onChange={(e) => setSensitivity(Number(e.target.value))}
+                    style={{ width: '60px', accentColor: 'var(--accent-cyan)' }}
+                    title="Detection Sensitivity"
+                  />
+                </div>
                 <button 
                   className="btn btn-secondary" 
                   style={{ padding: '3px 8px', fontSize: '0.7rem' }}
