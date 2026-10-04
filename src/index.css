@@ -374,15 +374,17 @@ body {
 
 /* Top Toolbar */
 .control-toolbar {
-  height: 42px;
+  min-height: 42px;
+  height: auto;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 12px;
+  padding: 6px 12px;
   gap: 8px;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .grid-selector {
@@ -1065,8 +1067,9 @@ body {
   }
 
   .control-toolbar {
-    padding: 0 10px;
-    height: 44px;
+    padding: 6px 10px;
+    min-height: 44px;
+    height: auto;
   }
 
   .video-grid.grid-4,

@@ -260,147 +260,150 @@ export default function PlaybackSuite({
   return (
     <div className="playback-container">
       {/* Top Filter Bar: Camera & Date Picker */}
-      <div className="control-toolbar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 600 }}>
-            <Film size={15} color="var(--accent-blue)" />
-            <span>Archive Playback</span>
+      {/* Top Filter Bar: Camera & Date Picker */}
+      <div className="control-toolbar" style={{ height: 'auto', minHeight: '44px', padding: '6px 12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '8px', flexWrap: 'wrap' }}>
+          {/* Left Controls: Archive Title, Camera Selector, Single/Quad Switcher, Real/Sim Switcher */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 600 }}>
+              <Film size={15} color="var(--accent-blue)" />
+              <span>Playback</span>
+            </div>
+
+            {/* Camera Selector Dropdown */}
+            {!isQuadSync && (
+              <select
+                className="input-field"
+                style={{ width: 'auto', maxWidth: '210px', padding: '3px 8px', fontSize: '0.72rem', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontWeight: 600 }}
+                value={selectedCameraId}
+                onChange={(e) => {
+                  if (setSelectedCameraId) setSelectedCameraId(e.target.value);
+                  setSelectedRecording(null);
+                  setRecordings([]);
+                }}
+                title="Select camera channel to review recorded footage"
+              >
+                {cameras.map(cam => (
+                  <option key={cam.id} value={cam.id}>
+                    📹 {cam.name.replace('CP PLUS ', '')}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {/* Single vs Quad Synchronized Playback Switcher */}
+            <div style={{ display: 'flex', background: 'var(--bg-primary)', padding: '2px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+              <button
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '3px 8px',
+                  fontSize: '0.72rem',
+                  border: 'none',
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                  background: !isQuadSync ? 'var(--accent-blue)' : 'transparent',
+                  color: !isQuadSync ? '#fff' : 'var(--text-secondary)'
+                }}
+                onClick={() => setIsQuadSync(false)}
+              >
+                <Square size={12} />
+                <span>Single</span>
+              </button>
+              <button
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '3px 8px',
+                  fontSize: '0.72rem',
+                  border: 'none',
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                  background: isQuadSync ? 'var(--accent-blue)' : 'transparent',
+                  color: isQuadSync ? '#fff' : 'var(--text-secondary)'
+                }}
+                onClick={() => setIsQuadSync(true)}
+                title="Synchronized 4-Camera Playback (Exact Timestamp Sync)"
+              >
+                <Grid2X2 size={12} />
+                <span>Quad Sync</span>
+              </button>
+            </div>
+
+            {/* Playback Source Mode: Real DVR vs Simulation */}
+            <div style={{ display: 'flex', background: 'var(--bg-primary)', padding: '2px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+              <button
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '3px 8px',
+                  fontSize: '0.72rem',
+                  border: 'none',
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                  background: useRealRecording ? 'var(--accent-green)' : 'transparent',
+                  color: useRealRecording ? '#000' : 'var(--text-secondary)',
+                  fontWeight: useRealRecording ? 700 : 400
+                }}
+                onClick={() => setUseRealRecording(true)}
+                title="Play real continuous fMP4 recordings saved on disk by MediaMTX"
+              >
+                <span>🔴 DVR Files ({recordings.length})</span>
+              </button>
+              <button
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '3px 8px',
+                  fontSize: '0.72rem',
+                  border: 'none',
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                  background: !useRealRecording ? 'var(--accent-blue)' : 'transparent',
+                  color: !useRealRecording ? '#fff' : 'var(--text-secondary)'
+                }}
+                onClick={() => setUseRealRecording(false)}
+              >
+                <span>🧪 Sim</span>
+              </button>
+            </div>
           </div>
 
-          {/* Camera Selector Dropdown */}
-          {!isQuadSync && (
-            <select
-              className="input-field"
-              style={{ width: 'auto', padding: '3px 8px', fontSize: '0.72rem', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontWeight: 600 }}
-              value={selectedCameraId}
-              onChange={(e) => {
-                if (setSelectedCameraId) setSelectedCameraId(e.target.value);
-                setSelectedRecording(null);
-                setRecordings([]);
-              }}
-              title="Select camera channel to review recorded footage"
-            >
-              {cameras.map(cam => (
-                <option key={cam.id} value={cam.id}>
-                  📹 {cam.name} ({cam.location})
-                </option>
-              ))}
-            </select>
-          )}
+          {/* Right Controls: Clip Selector & Export */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {useRealRecording && recordings.length > 0 && !isQuadSync && (
+              <select
+                className="input-field"
+                style={{ width: 'auto', maxWidth: '240px', padding: '3px 8px', fontSize: '0.72rem', background: 'var(--bg-primary)', color: 'var(--accent-cyan)' }}
+                value={selectedRecording?.filename || ''}
+                onChange={(e) => {
+                  const found = recordings.find(r => r.filename === e.target.value);
+                  if (found) setSelectedRecording(found);
+                }}
+              >
+                {recordings.map((r, i) => (
+                  <option key={r.filename} value={r.filename}>
+                    📁 #{recordings.length - i}: {r.filename.slice(11, 19).replace(/-/g, ':')} ({r.sizeMB} MB)
+                  </option>
+                ))}
+              </select>
+            )}
 
-          {/* Single vs Quad Synchronized Playback Switcher */}
-          <div style={{ display: 'flex', background: 'var(--bg-primary)', padding: '2px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
-            <button
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '3px 8px',
-                fontSize: '0.72rem',
-                border: 'none',
-                borderRadius: '3px',
-                cursor: 'pointer',
-                background: !isQuadSync ? 'var(--accent-blue)' : 'transparent',
-                color: !isQuadSync ? '#fff' : 'var(--text-secondary)'
-              }}
-              onClick={() => setIsQuadSync(false)}
-            >
-              <Square size={12} />
-              <span>Single</span>
-            </button>
-            <button
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '3px 8px',
-                fontSize: '0.72rem',
-                border: 'none',
-                borderRadius: '3px',
-                cursor: 'pointer',
-                background: isQuadSync ? 'var(--accent-blue)' : 'transparent',
-                color: isQuadSync ? '#fff' : 'var(--text-secondary)'
-              }}
-              onClick={() => setIsQuadSync(true)}
-              title="Synchronized 4-Camera Playback (Exact Timestamp Sync)"
-            >
-              <Grid2X2 size={12} />
-              <span>Quad Sync (4 Cams)</span>
-            </button>
-          </div>
-
-          {/* Playback Source Mode: Real DVR vs Simulation */}
-          <div style={{ display: 'flex', background: 'var(--bg-primary)', padding: '2px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
-            <button
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '3px 8px',
-                fontSize: '0.72rem',
-                border: 'none',
-                borderRadius: '3px',
-                cursor: 'pointer',
-                background: useRealRecording ? 'var(--accent-green)' : 'transparent',
-                color: useRealRecording ? '#000' : 'var(--text-secondary)',
-                fontWeight: useRealRecording ? 700 : 400
-              }}
-              onClick={() => setUseRealRecording(true)}
-              title="Play real continuous fMP4 recordings saved on disk by MediaMTX"
-            >
-              <span>🔴 Real DVR Files ({recordings.length})</span>
-            </button>
-            <button
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '3px 8px',
-                fontSize: '0.72rem',
-                border: 'none',
-                borderRadius: '3px',
-                cursor: 'pointer',
-                background: !useRealRecording ? 'var(--accent-blue)' : 'transparent',
-                color: !useRealRecording ? '#fff' : 'var(--text-secondary)'
-              }}
-              onClick={() => setUseRealRecording(false)}
-            >
-              <span>🧪 Simulator</span>
-            </button>
-          </div>
-
-          {/* Real Recording Clip Selector */}
-          {useRealRecording && recordings.length > 0 && !isQuadSync && (
-            <select
-              className="input-field"
-              style={{ width: 'auto', padding: '3px 8px', fontSize: '0.72rem', background: 'var(--bg-primary)', color: 'var(--accent-cyan)' }}
-              value={selectedRecording?.filename || ''}
-              onChange={(e) => {
-                const found = recordings.find(r => r.filename === e.target.value);
-                if (found) setSelectedRecording(found);
-              }}
-            >
-              {recordings.map((r, i) => (
-                <option key={r.filename} value={r.filename}>
-                  📁 Clip #{recordings.length - i}: {r.filename} ({r.sizeMB} MB)
-                </option>
-              ))}
-            </select>
-          )}
-
-          {/* Export Clip Button */}
-          <div>
             <button 
               className="btn btn-primary"
-              style={{ padding: '5px 12px', fontSize: '0.75rem' }}
+              style={{ padding: '4px 10px', fontSize: '0.72rem', whiteSpace: 'nowrap' }}
               onClick={() => {
                 setShaCertificate(null);
                 setExportSuccess(false);
                 setExportModalOpen(true);
               }}
             >
-              <Download size={14} />
-              <span>Export Incident Clip</span>
+              <Download size={13} />
+              <span>Export Clip</span>
             </button>
           </div>
         </div>
