@@ -90,6 +90,69 @@ export default function App() {
     localStorage.setItem('aegis_tripwires', JSON.stringify(tripwires));
   }, [tripwires]);
 
+  // Real-Time Backend WebSocket Connection
+  useEffect(() => {
+    let ws = null;
+    let reconnectTimeout = null;
+
+    const connectWs = () => {
+      try {
+        ws = new WebSocket('ws://localhost:3001/ws');
+
+        ws.onopen = () => {
+          console.log('[AegisVMS] Connected to real-time backend telemetry websocket');
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const msg = JSON.parse(event.data);
+            if (msg.event === 'AI_ALARM') {
+              const alarm = msg.data;
+              const matchingCam = cameras.find(c => c.id === alarm.cameraId) || { name: alarm.cameraId };
+              
+              setEvents(prev => [{
+                id: alarm.id,
+                cameraId: alarm.cameraId,
+                cameraName: matchingCam.name,
+                siteName: 'CP PLUS DVR',
+                type: alarm.type.toUpperCase().replace('_', ' '),
+                target: alarm.label,
+                confidence: `${Math.round(alarm.confidence * 100)}%`,
+                timestamp: new Date(alarm.timestamp).toLocaleTimeString(),
+                severity: 'critical',
+                acknowledged: false
+              }, ...prev.slice(0, 49)]);
+
+              if (!soundMuted) {
+                sounds.playAlarm();
+              }
+            }
+          } catch (e) {
+            console.error('Error parsing WS message:', e);
+          }
+        };
+
+        ws.onclose = () => {
+          reconnectTimeout = setTimeout(connectWs, 5000);
+        };
+
+        ws.onerror = () => {
+          ws.close();
+        };
+      } catch (err) {
+        console.warn('WS connection failed, retrying in 5s...', err);
+        reconnectTimeout = setTimeout(connectWs, 5000);
+      }
+    };
+
+    connectWs();
+
+    return () => {
+      if (ws) ws.close();
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+    };
+  }, [soundMuted, cameras]);
+
   // PTZ Control handler
   const handleUpdatePTZ = (camId, pan, tilt, zoom) => {
     setCameras(prev => prev.map(c => {

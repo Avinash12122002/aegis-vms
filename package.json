@@ -11,10 +11,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "hls.js": "^1.7.3",
     "lucide-react": "^1.51.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "ws": "^8.22.0"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",

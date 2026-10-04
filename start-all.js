@@ -44,6 +44,25 @@ async function start() {
     console.log('[AegisVMS] MediaMTX is already active on port 8888.');
   }
 
+  // Check and start Backend Server on port 3001
+  const serverRunning = await isPortOpen(3001);
+  let serverProcess = null;
+
+  if (!serverRunning) {
+    console.log('[AegisVMS] Starting Backend API & Recording Server on port 3001...');
+    serverProcess = spawn('node', ['server.js'], {
+      cwd: __dirname,
+      stdio: 'inherit',
+      detached: false
+    });
+
+    serverProcess.on('error', (err) => {
+      console.warn('[AegisVMS] Note: Could not auto-launch server.js:', err.message);
+    });
+  } else {
+    console.log('[AegisVMS] Backend server is already active on port 3001.');
+  }
+
   // Start Vite dev server
   const npxCmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
   const viteProcess = spawn(npxCmd, ['vite', ...process.argv.slice(2)], {
@@ -55,6 +74,9 @@ async function start() {
   const cleanup = () => {
     if (mtxProcess && !mtxProcess.killed) {
       mtxProcess.kill();
+    }
+    if (serverProcess && !serverProcess.killed) {
+      serverProcess.kill();
     }
     process.exit();
   };

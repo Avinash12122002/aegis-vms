@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# VMS CCTV Recordings
+mediamtx/recordings/
+recordings/

@@ -1,13 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Activity, 
   WifiOff, 
-  RotateCcw
+  RotateCcw,
+  HardDrive,
+  Cpu,
+  Server
 } from 'lucide-react';
 import { sounds } from '../services/soundEffects';
 
 export default function CameraHealthDiagnostics({ cameras, onToggleCameraStatus }) {
   const [filter, setFilter] = useState('all');
+  const [healthData, setHealthData] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchHealth = () => {
+      fetch('http://localhost:3001/api/health')
+        .then(r => r.json())
+        .then(data => {
+          if (isMounted) setHealthData(data);
+        })
+        .catch(e => console.warn('Health API unreachable:', e.message));
+    };
+
+    fetchHealth();
+    const interval = setInterval(fetchHealth, 5000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   const onlineCount = cameras.filter(c => c.status === 'online').length;
   const offlineCount = cameras.length - onlineCount;
@@ -74,6 +97,19 @@ export default function CameraHealthDiagnostics({ cameras, onToggleCameraStatus 
           </div>
           <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '4px' }}>
             Average Packet Loss: 0.02%
+          </div>
+        </div>
+
+        <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>RECORDING STORAGE</span>
+            <HardDrive size={14} color="var(--accent-cyan)" />
+          </div>
+          <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-cyan)', marginTop: '4px' }}>
+            {healthData?.storage?.totalStorageUsedMB ? `${healthData.storage.totalStorageUsedMB} MB` : 'Calculating...'}
+          </div>
+          <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+            {healthData?.storage?.totalRecordingsCount || 0} Continuous Clips • 72h Retention
           </div>
         </div>
 

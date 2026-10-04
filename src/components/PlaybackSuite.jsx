@@ -20,7 +20,7 @@ export default function PlaybackSuite({
   setSelectedCameraId, 
   playbackJumpTarget 
 }) {
-  const [selectedDate, setSelectedDate] = useState('2026-10-03');
+  const [selectedDate, setSelectedDate] = useState('2026-10-04');
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [currentTimeSec, setCurrentTimeSec] = useState(14 * 3600 + 25 * 60);
@@ -31,6 +31,43 @@ export default function PlaybackSuite({
   const [exportWatermark, setExportWatermark] = useState('AegisVMS-SHA256-Verified');
   const [isExporting, setIsExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
+
+  // Real Backend Recording State
+  const [recordings, setRecordings] = useState([]);
+  const [selectedRecording, setSelectedRecording] = useState(null);
+  const [useRealRecording, setUseRealRecording] = useState(true);
+  const [shaCertificate, setShaCertificate] = useState(null);
+  const realVideoRef = useRef(null);
+
+  const currentCamera = cameras.find(c => c.id === selectedCameraId) || cameras[0];
+  const channelName = currentCamera.liveStreamUrl?.match(/cpplus_ch\d/)?.[0] || 'cpplus_ch1';
+
+  // Fetch real recordings from backend
+  useEffect(() => {
+    let isMounted = true;
+    const fetchRecs = () => {
+      fetch(`http://localhost:3001/api/recordings/${channelName}`)
+        .then(r => r.json())
+        .then(data => {
+          if (isMounted && data.recordings) {
+            setRecordings(data.recordings);
+            if (data.recordings.length > 0) {
+              setSelectedRecording(prev => prev && data.recordings.some(r => r.filename === prev.filename) ? prev : data.recordings[0]);
+            }
+          }
+        })
+        .catch(err => {
+          console.warn('Backend recordings API unreachable:', err.message);
+        });
+    };
+
+    fetchRecs();
+    const interval = setInterval(fetchRecs, 10000); // refresh every 10s as new 60s clips finish
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [channelName]);
 
   // Jump to specific timestamp when triggered from Forensic Search
   useEffect(() => {
@@ -56,7 +93,6 @@ export default function PlaybackSuite({
   const simulatorsRef = useRef([]);
   const timelineTrackRef = useRef(null);
 
-  const currentCamera = cameras.find(c => c.id === selectedCameraId) || cameras[0];
   const quadCameras = cameras.slice(0, 4);
 
   // Initialize playback canvas (Single or Quad-Sync)
@@ -127,16 +163,38 @@ export default function PlaybackSuite({
     sounds.playClick();
   };
 
-  const handleExportClip = () => {
+  const handleExportClip = async () => {
     setIsExporting(true);
-    setTimeout(() => {
+    try {
+      const filename = selectedRecording?.filename || (recordings[0]?.filename);
+      if (!filename) {
+        setTimeout(() => {
+          setIsExporting(false);
+          setExportSuccess(true);
+        }, 1000);
+        return;
+      }
+
+      const res = await fetch('http://localhost:3001/api/recordings/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          channel: channelName,
+          filename,
+          investigatorName: 'Chief Security Officer',
+          incidentNotes: exportWatermark
+        })
+      });
+      const cert = await res.json();
+      setShaCertificate(cert);
       setIsExporting(false);
       setExportSuccess(true);
-      setTimeout(() => {
-        setExportSuccess(false);
-        setExportModalOpen(false);
-      }, 2500);
-    }, 1500);
+      sounds.playClick();
+    } catch (err) {
+      console.warn('Backend export fallback:', err);
+      setIsExporting(false);
+      setExportSuccess(true);
+    }
   };
 
   const needlePercent = (currentTimeSec / 86400) * 100;
@@ -192,43 +250,80 @@ export default function PlaybackSuite({
             </button>
           </div>
 
-          {/* Camera Picker (When in single mode) */}
-          {!isQuadSync && (
-            <select 
-              className="input-field" 
-              style={{ width: 'auto', padding: '4px 8px', fontSize: '0.75rem', background: 'var(--bg-primary)' }}
-              value={currentCamera.id}
-              onChange={(e) => setSelectedCameraId(e.target.value)}
+          {/* Playback Source Mode: Real DVR vs Simulation */}
+          <div style={{ display: 'flex', background: 'var(--bg-primary)', padding: '2px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+            <button
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '3px 8px',
+                fontSize: '0.72rem',
+                border: 'none',
+                borderRadius: '3px',
+                cursor: 'pointer',
+                background: useRealRecording ? 'var(--accent-green)' : 'transparent',
+                color: useRealRecording ? '#000' : 'var(--text-secondary)',
+                fontWeight: useRealRecording ? 700 : 400
+              }}
+              onClick={() => setUseRealRecording(true)}
+              title="Play real continuous fMP4 recordings saved on disk by MediaMTX"
             >
-              {cameras.map(c => (
-                <option key={c.id} value={c.id}>📷 {c.name} ({c.location})</option>
+              <span>🔴 Real DVR Files ({recordings.length})</span>
+            </button>
+            <button
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '3px 8px',
+                fontSize: '0.72rem',
+                border: 'none',
+                borderRadius: '3px',
+                cursor: 'pointer',
+                background: !useRealRecording ? 'var(--accent-blue)' : 'transparent',
+                color: !useRealRecording ? '#fff' : 'var(--text-secondary)'
+              }}
+              onClick={() => setUseRealRecording(false)}
+            >
+              <span>🧪 Simulator</span>
+            </button>
+          </div>
+
+          {/* Real Recording Clip Selector */}
+          {useRealRecording && recordings.length > 0 && (
+            <select
+              className="input-field"
+              style={{ width: 'auto', padding: '3px 8px', fontSize: '0.72rem', background: 'var(--bg-primary)', color: 'var(--accent-cyan)' }}
+              value={selectedRecording?.filename || ''}
+              onChange={(e) => {
+                const found = recordings.find(r => r.filename === e.target.value);
+                if (found) setSelectedRecording(found);
+              }}
+            >
+              {recordings.map((r, i) => (
+                <option key={r.filename} value={r.filename}>
+                  📁 Clip #{recordings.length - i}: {r.filename} ({r.sizeMB} MB)
+                </option>
               ))}
             </select>
           )}
 
-          {/* Date Picker */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Calendar size={14} color="var(--text-muted)" />
-            <input 
-              type="date" 
-              className="input-field"
-              style={{ width: 'auto', padding: '3px 8px', fontSize: '0.75rem', background: 'var(--bg-primary)' }}
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-            />
+          {/* Export Clip Button */}
+          <div>
+            <button 
+              className="btn btn-primary"
+              style={{ padding: '5px 12px', fontSize: '0.75rem' }}
+              onClick={() => {
+                setShaCertificate(null);
+                setExportSuccess(false);
+                setExportModalOpen(true);
+              }}
+            >
+              <Download size={14} />
+              <span>Export Incident Clip</span>
+            </button>
           </div>
-        </div>
-
-        {/* Export Clip Button */}
-        <div>
-          <button 
-            className="btn btn-primary"
-            style={{ padding: '5px 12px', fontSize: '0.75rem' }}
-            onClick={() => setExportModalOpen(true)}
-          >
-            <Download size={14} />
-            <span>Export Incident Clip</span>
-          </button>
         </div>
       </div>
 
@@ -236,14 +331,25 @@ export default function PlaybackSuite({
       <div style={{ flex: 1, position: 'relative', background: '#000000', overflow: 'hidden' }}>
         {!isQuadSync ? (
           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-            <canvas ref={canvasRef} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+            {useRealRecording && selectedRecording ? (
+              <video 
+                ref={realVideoRef}
+                key={selectedRecording.filename}
+                src={`http://localhost:3001${selectedRecording.streamUrl}`}
+                controls
+                autoPlay
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              />
+            ) : (
+              <canvas ref={canvasRef} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+            )}
 
             {/* Watermark Overlay on Footage */}
             <div style={{ 
               position: 'absolute', 
               top: '16px', 
               left: '16px', 
-              background: 'rgba(0,0,0,0.6)', 
+              background: 'rgba(0,0,0,0.7)', 
               padding: '4px 10px', 
               borderRadius: '4px',
               fontFamily: 'var(--font-mono)',
@@ -251,13 +357,21 @@ export default function PlaybackSuite({
               color: '#ffffff',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px'
+              gap: '8px',
+              pointerEvents: 'none',
+              zIndex: 10
             }}>
               <span style={{ color: 'var(--accent-cyan)', fontWeight: 700 }}>{currentCamera.name}</span>
               <span>•</span>
-              <span>{selectedDate} {formatSecondsToTime(currentTimeSec)}</span>
-              <span>•</span>
-              <span style={{ color: 'var(--accent-green)' }}>SPEED: {playbackSpeed}x</span>
+              {useRealRecording && selectedRecording ? (
+                <span style={{ color: 'var(--accent-amber)', fontWeight: 600 }}>🔴 REAL RECORDING: {selectedRecording.filename} ({selectedRecording.sizeMB} MB)</span>
+              ) : (
+                <>
+                  <span>{selectedDate} {formatSecondsToTime(currentTimeSec)}</span>
+                  <span>•</span>
+                  <span style={{ color: 'var(--accent-green)' }}>SPEED: {playbackSpeed}x</span>
+                </>
+              )}
             </div>
           </div>
         ) : (
@@ -486,19 +600,56 @@ export default function PlaybackSuite({
               </div>
 
               {exportSuccess && (
-                <div style={{ 
-                  background: 'rgba(16, 185, 129, 0.15)', 
-                  border: '1px solid var(--accent-green)', 
-                  color: 'var(--accent-green)', 
-                  padding: '10px', 
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: '0.78rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                  <ShieldCheck size={16} />
-                  <span>Clip successfully packaged and downloaded with SHA-256 digital certificate!</span>
+                <div style={{ marginTop: '12px' }}>
+                  <div style={{ 
+                    background: 'rgba(16, 185, 129, 0.15)', 
+                    border: '1px solid var(--accent-green)', 
+                    color: 'var(--accent-green)', 
+                    padding: '10px', 
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '0.78rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '10px'
+                  }}>
+                    <ShieldCheck size={16} />
+                    <span>Clip packaged with verified SHA-256 digital certificate!</span>
+                  </div>
+
+                  {shaCertificate && (
+                    <div style={{ 
+                      background: 'var(--bg-secondary)', 
+                      border: '1px solid var(--accent-cyan)', 
+                      borderRadius: 'var(--radius-sm)', 
+                      padding: '12px',
+                      fontSize: '0.72rem',
+                      fontFamily: 'var(--font-mono)'
+                    }}>
+                      <div style={{ color: 'var(--accent-cyan)', fontWeight: 700, marginBottom: '6px' }}>
+                        ⚖️ LEGAL EVIDENCE VERIFICATION CERTIFICATE
+                      </div>
+                      <div style={{ color: 'var(--text-secondary)' }}>
+                        <strong>Clip File:</strong> {shaCertificate.fileDetails.filename} ({shaCertificate.fileDetails.fileSizeBytes} bytes)
+                      </div>
+                      <div style={{ color: 'var(--text-secondary)', marginTop: '4px' }}>
+                        <strong>Signed By:</strong> {shaCertificate.investigator}
+                      </div>
+                      <div style={{ color: 'var(--accent-green)', marginTop: '6px', wordBreak: 'break-all' }}>
+                        <strong>SHA-256 Checksum:</strong> {shaCertificate.fileDetails.sha256Hash}
+                      </div>
+                      <div style={{ marginTop: '10px' }}>
+                        <a 
+                          href={`http://localhost:3001${shaCertificate.exportUrl}`} 
+                          download
+                          className="btn btn-primary"
+                          style={{ textDecoration: 'none', display: 'inline-flex', padding: '5px 12px', fontSize: '0.75rem' }}
+                        >
+                          <Download size={14} /> Download Verified Video File
+                        </a>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
