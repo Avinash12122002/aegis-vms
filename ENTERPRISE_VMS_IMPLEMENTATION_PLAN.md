@@ -504,58 +504,59 @@ A VMS architecture must scale predictably. Merely having VMS software does not g
 
 ---
 
-## 15. Active Project Technology Stack & Developer Requirements
+## 15. Recommended Full-Stack Technology Stack & Architecture (JavaScript / TypeScript & Node.js)
 
-This implementation plan directly maps to the active codebase (**`aegis-vms-app`**). Below is the exact technology stack, libraries, and frameworks currently implemented in this repository, alongside the developer competencies required to extend it.
+This VMS is architected to be built from the ground up using modern **JavaScript / TypeScript & Node.js**. Any developer or AI coding agent can implement the entire system from scratch without external dependencies on legacy languages.
 
-### 📌 1. Exact Technologies Used in This Project (`aegis-vms-app`)
+### 📌 1. Technology Stack to Implement
 
-| Layer / Component | Technology / Library | Version / File Location | Role & Implementation in This Project |
+| Layer / Component | Technology / Library | Recommended NPM Package / Tool | Implementation Purpose & Responsibility |
 | :--- | :--- | :--- | :--- |
-| **Frontend Framework** | **React** | `^19.2.8` (`package.json`) | Component-based UI managing camera feeds, responsive video wall, playback suite, and modals. |
-| **DOM Renderer** | **React DOM** | `^19.2.8` (`package.json`) | High-performance virtual DOM rendering with fast reactive state updates. |
-| **Build Tool & Dev Server**| **Vite** | `^8.3.0` (`vite.config.js`) | Next-gen lightning-fast dev server with Hot Module Replacement (HMR) and optimized ES module bundling. |
-| **Vite React Plugin** | **`@vitejs/plugin-react`** | `^6.1.1` (`package.json`) | Fast JSX compilation and Fast Refresh support in Vite. |
-| **Video Player Engine** | **`hls.js`** | `^1.7.3` (`src/components/CameraCell.jsx`) | Hardware-accelerated H.265 / HEVC and H.264 playback inside HTML5 `<video>` tags via Low-Latency fMP4 HLS. Handles auto-recovery and memory cleanup. |
-| **UI Iconography** | **`lucide-react`** | `^1.51.0` (`src/components/*`) | Clean, modern surveillance icons for PTZ, cameras, layout grids, shields, and diagnostic sensors. |
-| **High-Speed Linter** | **`oxlint`** | `^1.81.0` (`.oxlintrc.json`) | Rust-based ultra-fast linter enforcing code quality and strict syntax hygiene. |
-| **Design System & Styling**| **Vanilla CSS3** | `src/index.css` & `src/App.css` | Glassmorphism design system (`--bg-primary: #0a0d14`, `--accent-cyan: #06b6d4`), responsive layout grids (`.grid-1`, `.grid-4`, `.grid-8`, `.grid-9`, `.grid-16`), custom scrollbars, and micro-animations. |
-| **Edge Media Gateway** | **MediaMTX** | `mediamtx/mediamtx.exe` | Embedded Go-based RTSP streaming server remuxing CP PLUS DVR streams to HLS on port `8888` and WebRTC on port `8889`. |
-| **Gateway Configuration** | **YAML** | `mediamtx/mediamtx.yml` | Sets `sourceOnDemand: no` and `hlsAlwaysRemux: yes` to maintain continuous background caching for instant channel switching. |
-| **Process Orchestrator** | **Node.js (ESM)** | `start-all.js` (`"type": "module"`) | Automatically verifies port `8888` availability via `net.Socket`, spawns `mediamtx.exe` in the background, and runs `vite` concurrently with graceful multi-process termination. |
-| **DVR & Stream Integration**| **RTSP (TCP)** | Channels 1–8 (`mediamtx.yml`) | Ingests from physical CP PLUS 8-Channel DVR at `192.168.1.2:554` supporting Main-Streams (`subtype=0`) and Sub-Streams (`subtype=1`). |
-| **Synthesized Audio System**| **Web Audio API** | `src/services/soundEffects.js` | Pure browser Web Audio API oscillator synthesizing emergency alarm sirens, tripwire alert chimes, and push-to-talk tones without external MP3 files. |
-| **Diagnostic Probes** | **Node.js Scripts** | `probe.js`, `scan_dvr_channels.js`, `test_vms.js` | Built-in CLI tools to probe DVR channels, verify RTSP authentication, and test HTTP stream health. |
+| **Frontend Framework** | **React** | `react`, `react-dom` (v18+ or v19) | Build reactive, component-based surveillance dashboard and multi-camera matrix. |
+| **Build Tool & Bundler** | **Vite** | `vite`, `@vitejs/plugin-react` | Ultra-fast local development server with Hot Module Replacement and production bundling. |
+| **Video Player Engine** | **`hls.js`** | `hls.js` | Ingest Low-Latency fMP4 HLS streams in browser `<video>` elements with hardware-accelerated H.265 (HEVC) & H.264 decoding. |
+| **UI Iconography** | **Lucide Icons** | `lucide-react` | Clean vector iconography for surveillance controls (PTZ, layout grids, cameras, alarms). |
+| **Code Quality & Linter** | **Linter** | `oxlint` or `eslint` | Fast static analysis enforcing clean code and syntax hygiene. |
+| **Design System & Styling**| **Vanilla CSS3** | Custom CSS Variables & CSS Grid | Dark glassmorphism interface (`--bg-primary: #0a0d14`, `--accent-cyan: #06b6d4`), responsive layout grids (`.grid-1`, `.grid-4`, `.grid-8`, `.grid-9`, `.grid-16`), and non-intrusive OSD badges. |
+| **Edge Media Gateway** | **MediaMTX** | Standalone Go binary (`mediamtx`) | Ingest raw camera RTSP streams (TCP), remux to Low-Latency HLS on port `8888` and WebRTC on port `8889`. |
+| **Gateway Configuration** | **YAML** | `mediamtx.yml` | Set `sourceOnDemand: no` and `hlsAlwaysRemux: yes` to maintain continuous background streaming for zero-delay switching. |
+| **Process Orchestrator** | **Node.js (ESM)** | Custom `start-all.js` script | Verifies port `8888` via `net.Socket`, spawns the `mediamtx` daemon via `child_process.spawn()`, and starts Vite concurrently with graceful process cleanup on exit. |
+| **Audio Synthesizer** | **Web Audio API** | Native Browser Audio API | Pure browser audio oscillator synthesizing emergency alarm sirens, tripwire alerts, and push-to-talk tones without external MP3 files. |
+| **Video Chunking & Slicing**| **Node.js + FFmpeg** | `fluent-ffmpeg` / FFmpeg CLI | Slices continuous RTSP streams into 60-second `.mp4` chunks and manages 5–10s pre-alarm ring buffers. |
+| **Camera Discovery & PTZ** | **Node.js ONVIF** | `node-onvif` / `onvif` | Pure JavaScript implementation of ONVIF WS-Discovery (SOAP/XML) to detect LAN cameras and dispatch Pan/Tilt/Zoom commands. |
+| **AI Computer Vision in JS**| **Node.js ONNX Runtime**| `onnxruntime-node` | Executes `yolov8n.onnx` models directly inside Node.js for real-time Person and Vehicle detection without requiring Python. |
+| **Cloud Object Storage** | **S3 SDK** | `@aws-sdk/client-s3` | Uploads recorded video clips to Cloudflare R2 ($0 egress fees) and generates time-limited pre-signed playback links. |
+| **Zero-Trust Remote Access**| **Cloudflare Tunnel** | `cloudflared` | Secure outbound-only tunnel allowing remote monitoring without opening router firewall ports. |
 
 ---
 
-### 📌 2. Frontend Component Architecture in This Project
+### 📌 2. Modular Component Architecture to Build
 
-The frontend application (`src/components/`) is modularized into specialized operational suites:
+The frontend application must be structured into the following modular components:
 
-* **`LiveVideoWall.jsx`**: Central multi-camera monitoring grid supporting dynamic layouts (`1`, `4`, `8`, `9`, `16`) with `localStorage` grid preference persistence and double-click full-screen focus.
-* **`CameraCell.jsx`**: Individual HLS video cell with automatic stream recovery, latency monitoring, signal health indicator, aspect-ratio preservation (`object-fit: fill`), and top-left OSD badge positioning.
-* **`PlaybackSuite.jsx`**: Historical footage player featuring an interactive color-coded timeline (green continuous / red AI alarms), date/time precise seeking, and multi-speed playback (0.5x to 16x).
-* **`AiAnalyticsView.jsx`**: Computer vision center displaying live Person/Vehicle classification logs, bounding-box overlays, virtual intrusion polygon zones, and directional tripwire line controls.
-* **`FacilityEMap.jsx`**: Interactive 2D architectural floor plan with camera viewing cones, placement markers, and flashing alarm beacons.
-* **`PTZController.jsx`**: 8-directional Pan/Tilt/Zoom joystick with optical zoom step controls and preset position bookmarks.
-* **`TwoWayAudioModal.jsx`**: Push-to-talk audio intercom broadcasting operator voice to camera speakers.
-* **`CameraHealthDiagnostics.jsx`**: Real-time telemetry monitoring FPS, bitrate, jitter, and dropped frames.
-* **`UserManagementModal.jsx`**: Role-Based Access Control (RBAC) manager with camera-level permission assignments (Super Admin, Manager, Guard, Auditor).
-* **`CloudflareSettingsModal.jsx`**: Zero-Trust Cloudflare Tunnel configuration and Cloudflare R2 backup settings.
-* **`ForensicSearchModal.jsx`**: Forensic investigation modal filtering footage by camera, date, time window, and AI event tags.
+* **`LiveVideoWall`**: Central multi-camera monitoring grid supporting dynamic layouts (`1`, `4`, `8`, `9`, `16`) with `localStorage` grid preference persistence and double-click full-screen focus.
+* **`CameraCell`**: Individual HLS video cell with automatic stream recovery, latency monitoring, signal health indicator, aspect-ratio preservation (`object-fit: fill`), and top-left OSD badge positioning.
+* **`PlaybackSuite`**: Historical footage player featuring an interactive color-coded timeline (green continuous / red AI alarms), date/time precise seeking, and multi-speed playback (0.5x to 16x).
+* **`AiAnalyticsView`**: Computer vision center displaying live Person/Vehicle classification logs, bounding-box overlays, virtual intrusion polygon zones, and directional tripwire line controls.
+* **`FacilityEMap`**: Interactive 2D architectural floor plan with camera viewing cones, placement markers, and flashing alarm beacons.
+* **`PTZController`**: 8-directional Pan/Tilt/Zoom joystick with optical zoom step controls and preset position bookmarks.
+* **`TwoWayAudioModal`**: Push-to-talk audio intercom broadcasting operator voice to camera speakers.
+* **`CameraHealthDiagnostics`**: Real-time telemetry monitoring FPS, bitrate, jitter, and dropped frames.
+* **`UserManagementModal`**: Role-Based Access Control (RBAC) manager with camera-level permission assignments (Super Admin, Manager, Guard, Auditor).
+* **`CloudflareSettingsModal`**: Zero-Trust Cloudflare Tunnel configuration and Cloudflare R2 backup settings.
+* **`ForensicSearchModal`**: Forensic investigation modal filtering footage by camera, date, time window, and AI event tags.
 
 ---
 
-### 📌 3. Developer Skill Sets & Technical Competencies (This Project Stack)
+### 📌 3. Developer Skill Sets & Technical Competencies
 
-To build and extend this exact codebase, a developer needs proficiencies in:
+Any developer or AI coding agent implementing this system must adhere to these technical standards:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│             CURRENT PROJECT DEVELOPER CORE SKILL SET                   │
+│             CORE DEVELOPER SKILLS & STANDARDS REQUIRED                 │
 ├────────────────────────────────────────────────────────────────────────┤
-│ 1. React 19 & Vite: Hooks (useState, useEffect, useRef), Fast HMR      │
+│ 1. React & Vite: Stateful hooks, lifecycle management, fast HMR        │
 │ 2. Video Streaming: Hls.js lifecycle, HTML5 <video> hardware HEVC      │
 │ 3. Node.js Scripting: ES Modules, child_process.spawn(), net.Socket    │
 │ 4. Media Gateway: MediaMTX RTSP-to-HLS remuxing, mediamtx.yml tuning   │
@@ -564,33 +565,36 @@ To build and extend this exact codebase, a developer needs proficiencies in:
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-1. **React 19 & State Management:**
-   * Efficient hook usage: managing camera selection state, layout toggles, modal dialogs, and simulated telemetry streams.
-   * `localStorage` synchronization: retaining user layout preferences across browser refreshes.
-2. **Video Streaming & Hls.js Lifecycle:**
-   * Cleanly instantiating `new Hls()`, attaching to video elements, handling `Hls.Events.ERROR` with fatal error recovery, and strictly calling `hls.destroy()` upon cell unmounting to prevent memory exhaustion in multi-grid views.
-   * Applying `object-fit: fill` and `-webkit-optimize-contrast` to remove letterbox sidebars and ensure crisp hardware DVR text.
-3. **Node.js Process Orchestration:**
-   * Working with `start-all.js` to manage multi-process lifecycles: checking port availability (`net.Socket`), spawning daemon binaries (`mediamtx.exe`), and triggering Vite.
-4. **MediaMTX Gateway Configuration:**
-   * Setting up RTSP camera paths in `mediamtx.yml`, selecting between Main-Stream (`subtype=0`) and Sub-Stream (`subtype=1`), and configuring low-latency HLS parameters (`hlsSegmentDuration`, `hlsPartDuration`).
+1. **React State & Video Lifecycle Management:**
+   * Cleanly instantiate `new Hls()`, attach to video elements, handle fatal media errors, and **strictly destroy instances (`hls.destroy()`)** upon cell unmounting to prevent memory leaks in multi-grid views.
+   * Apply `object-fit: fill` and `-webkit-optimize-contrast` to remove letterbox sidebars and ensure crisp hardware DVR text.
+   * Synchronize layout states with `localStorage` to preserve user grid choices across page reloads.
+2. **Node.js Process Supervision:**
+   * Create an orchestrator script (`start-all.js`) to verify port availability (`net.Socket`), spawn background daemons (`mediamtx`), and trigger Vite with unified termination signals.
+3. **MediaMTX Gateway Configuration:**
+   * Configure camera paths in `mediamtx.yml`, selecting between Main-Stream (`subtype=0`) and Sub-Stream (`subtype=1`), and tune low-latency HLS parameters (`hlsSegmentDuration`, `hlsPartDuration`).
 
 ---
 
-### 📌 4. How to Run This Project Workstation
+### 📌 4. Step-by-Step Initial Project Setup Commands
+
+For a developer or AI initiating this project from scratch:
 
 ```bash
-# 1. Install dependencies
-npm install
+# 1. Initialize project with Vite and React
+npm create vite@latest vms-app -- --template react
+cd vms-app
 
-# 2. Start both MediaMTX Gateway and Vite Frontend simultaneously
+# 2. Install essential dependencies
+npm install hls.js lucide-react
+
+# 3. (Optional) Install developer tooling and linters
+npm install -D oxlint
+
+# 4. Download and place the MediaMTX binary in ./mediamtx/
+
+# 5. Start the development environment
 npm run dev
-
-# 3. Code quality inspection
-npm run lint
-
-# 4. Production build
-npm run build
 ```
 
 ---
