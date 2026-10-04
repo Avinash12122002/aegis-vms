@@ -19,7 +19,7 @@ An industry-grade, developer-friendly blueprint for designing, architecting, and
 12. [Multi-Location & Enterprise Multi-Site CCTV Management](#12-multi-location--enterprise-multi-site-cctv-management)
 13. [Scalability Blueprint: Designing for 10 Cameras vs 100+ Cameras](#13-scalability-blueprint-designing-for-10-cameras-vs-100-cameras)
 14. [Key Features & Benefits Checklist](#14-key-features--benefits-checklist)
-15. [Recommended Tech Stack](#15-recommended-tech-stack)
+15. [Recommended Full-Stack Technology Stack & Architecture](#15-recommended-full-stack-technology-stack--architecture-javascript--typescript--nodejs)
 16. [Phase-by-Phase Developer Implementation Roadmap](#16-phase-by-phase-developer-implementation-roadmap)
 
 ---
