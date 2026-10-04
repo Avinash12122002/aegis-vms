@@ -9,7 +9,10 @@ import {
   Film, 
   ShieldCheck, 
   Grid2X2,
-  Square
+  Square,
+  Maximize2,
+  Minimize2,
+  Scaling
 } from 'lucide-react';
 import { CameraStreamSimulator } from '../services/videoSimulator';
 import { sounds } from '../services/soundEffects';
@@ -38,12 +41,21 @@ export default function PlaybackSuite({
   const [useRealRecording, setUseRealRecording] = useState(true);
   const [shaCertificate, setShaCertificate] = useState(null);
   const [clipTime, setClipTime] = useState({ current: 0, duration: 60 });
+  const [fitMode, setFitMode] = useState('fill'); // 'fill' = 100% full width widescreen, 'contain' = original aspect ratio
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [quadRecordings, setQuadRecordings] = useState({});
+
+  const playbackContainerRef = useRef(null);
   const realVideoRef = useRef(null);
+  const quadVideo0Ref = useRef(null);
+  const quadVideo1Ref = useRef(null);
+  const quadVideo2Ref = useRef(null);
+  const quadVideo3Ref = useRef(null);
 
   const currentCamera = cameras.find(c => c.id === selectedCameraId) || cameras[0];
   const channelName = currentCamera.liveStreamUrl?.match(/cpplus_ch\d/)?.[0] || 'cpplus_ch1';
 
-  // Fetch real recordings from backend
+  // Fetch real recordings from backend for single camera
   useEffect(() => {
     let isMounted = true;
     setSelectedRecording(null);
@@ -74,6 +86,53 @@ export default function PlaybackSuite({
     };
   }, [channelName]);
 
+  // Fetch Quad Recordings across 4 channels for Quad-Sync mode
+  useEffect(() => {
+    if (!isQuadSync || !useRealRecording) return;
+    let isMounted = true;
+    const fetchQuad = () => {
+      fetch('http://localhost:3001/api/recordings')
+        .then(r => r.json())
+        .then(data => {
+          if (isMounted && data.channels) {
+            const map = {};
+            data.channels.forEach(ch => {
+              if (ch.latestRecording) {
+                map[ch.channel] = ch.latestRecording;
+              }
+            });
+            setQuadRecordings(map);
+          }
+        })
+        .catch(err => console.warn('Quad recordings API error:', err.message));
+    };
+
+    fetchQuad();
+    const interval = setInterval(fetchQuad, 10000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [isQuadSync, useRealRecording]);
+
+  // Fullscreen event listener
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
+  const handleToggleFullscreen = () => {
+    sounds.playClick();
+    if (!document.fullscreenElement) {
+      playbackContainerRef.current?.requestFullscreen?.();
+    } else {
+      document.exitFullscreen?.();
+    }
+  };
+
   // Jump to specific timestamp when triggered from Forensic Search
   useEffect(() => {
     if (!playbackJumpTarget) return;
@@ -100,10 +159,12 @@ export default function PlaybackSuite({
 
   const quadCameras = cameras.slice(0, 4);
 
-  // Initialize playback canvas (Single or Quad-Sync)
+  // Initialize playback canvas (Only when using simulation mode)
   useEffect(() => {
     simulatorsRef.current.forEach(sim => sim.stop());
     simulatorsRef.current = [];
+
+    if (useRealRecording) return; // Do not run canvas simulator if Real DVR is enabled
 
     if (!isQuadSync) {
       const canvas = canvasRef.current;
@@ -132,12 +193,12 @@ export default function PlaybackSuite({
       simulatorsRef.current.forEach(sim => sim.stop());
       simulatorsRef.current = [];
     };
-  }, [isQuadSync, currentCamera, quadCameras]);
+  }, [isQuadSync, currentCamera, quadCameras, useRealRecording]);
 
   // Timeline scrubber playback animation (runs for canvas simulation mode)
   useEffect(() => {
     let timer = null;
-    if (isPlaying && (!useRealRecording || isQuadSync)) {
+    if (isPlaying && (!useRealRecording || (isQuadSync && !useRealRecording))) {
       timer = setInterval(() => {
         setCurrentTimeSec(prev => {
           if (prev >= 86400) return 0;
@@ -158,16 +219,28 @@ export default function PlaybackSuite({
     return `${pad(hours)}:${pad(mins)}:${pad(secs)}`;
   };
 
-  // Play / Pause unified handler
+  const getActiveQuadVideoRefs = () => [quadVideo0Ref, quadVideo1Ref, quadVideo2Ref, quadVideo3Ref].filter(r => r.current);
+
+  // Play / Pause unified handler (controls Single or all 4 Quad Sync videos)
   const handlePlayPause = () => {
     sounds.playClick();
-    if (useRealRecording && !isQuadSync && realVideoRef.current) {
-      if (realVideoRef.current.paused) {
-        realVideoRef.current.play();
-        setIsPlaying(true);
-      } else {
-        realVideoRef.current.pause();
-        setIsPlaying(false);
+    if (useRealRecording) {
+      if (isQuadSync) {
+        const refs = getActiveQuadVideoRefs();
+        const shouldPlay = !isPlaying;
+        refs.forEach(r => {
+          if (shouldPlay) r.current.play().catch(() => {});
+          else r.current.pause();
+        });
+        setIsPlaying(shouldPlay);
+      } else if (realVideoRef.current) {
+        if (realVideoRef.current.paused) {
+          realVideoRef.current.play().catch(() => {});
+          setIsPlaying(true);
+        } else {
+          realVideoRef.current.pause();
+          setIsPlaying(false);
+        }
       }
     } else {
       setIsPlaying(!isPlaying);
@@ -178,16 +251,28 @@ export default function PlaybackSuite({
   const handleSpeedChange = (spd) => {
     sounds.playClick();
     setPlaybackSpeed(spd);
-    if (useRealRecording && !isQuadSync && realVideoRef.current) {
-      realVideoRef.current.playbackRate = spd;
+    if (useRealRecording) {
+      if (isQuadSync) {
+        getActiveQuadVideoRefs().forEach(r => {
+          r.current.playbackRate = spd;
+        });
+      } else if (realVideoRef.current) {
+        realVideoRef.current.playbackRate = spd;
+      }
     }
   };
 
   // Rewind 30s unified handler
   const handleRewind30 = () => {
     sounds.playClick();
-    if (useRealRecording && !isQuadSync && realVideoRef.current) {
-      realVideoRef.current.currentTime = Math.max(0, realVideoRef.current.currentTime - 30);
+    if (useRealRecording) {
+      if (isQuadSync) {
+        getActiveQuadVideoRefs().forEach(r => {
+          r.current.currentTime = Math.max(0, r.current.currentTime - 30);
+        });
+      } else if (realVideoRef.current) {
+        realVideoRef.current.currentTime = Math.max(0, realVideoRef.current.currentTime - 30);
+      }
     } else {
       setCurrentTimeSec(prev => Math.max(0, prev - 30));
     }
@@ -196,8 +281,14 @@ export default function PlaybackSuite({
   // Fast forward 30s unified handler
   const handleFastForward30 = () => {
     sounds.playClick();
-    if (useRealRecording && !isQuadSync && realVideoRef.current) {
-      realVideoRef.current.currentTime = Math.min(realVideoRef.current.duration || 60, realVideoRef.current.currentTime + 30);
+    if (useRealRecording) {
+      if (isQuadSync) {
+        getActiveQuadVideoRefs().forEach(r => {
+          r.current.currentTime = Math.min(r.current.duration || 60, r.current.currentTime + 30);
+        });
+      } else if (realVideoRef.current) {
+        realVideoRef.current.currentTime = Math.min(realVideoRef.current.duration || 60, realVideoRef.current.currentTime + 30);
+      }
     } else {
       setCurrentTimeSec(prev => Math.min(86400, prev + 30));
     }
@@ -211,8 +302,16 @@ export default function PlaybackSuite({
     const percentage = Math.max(0, Math.min(1, clickX / rect.width));
     sounds.playClick();
 
-    if (useRealRecording && !isQuadSync && realVideoRef.current && realVideoRef.current.duration) {
-      realVideoRef.current.currentTime = percentage * realVideoRef.current.duration;
+    if (useRealRecording) {
+      if (isQuadSync) {
+        getActiveQuadVideoRefs().forEach(r => {
+          if (r.current.duration) {
+            r.current.currentTime = percentage * r.current.duration;
+          }
+        });
+      } else if (realVideoRef.current && realVideoRef.current.duration) {
+        realVideoRef.current.currentTime = percentage * realVideoRef.current.duration;
+      }
     } else {
       const newSec = Math.round(percentage * 86400);
       setCurrentTimeSec(newSec);
@@ -258,8 +357,7 @@ export default function PlaybackSuite({
     : (currentTimeSec / 86400) * 100;
 
   return (
-    <div className="playback-container">
-      {/* Top Filter Bar: Camera & Date Picker */}
+    <div ref={playbackContainerRef} className="playback-container">
       {/* Top Filter Bar: Camera & Date Picker */}
       <div className="control-toolbar" style={{ height: 'auto', minHeight: '44px', padding: '6px 12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '8px', flexWrap: 'wrap' }}>
@@ -328,7 +426,7 @@ export default function PlaybackSuite({
                 title="Synchronized 4-Camera Playback (Exact Timestamp Sync)"
               >
                 <Grid2X2 size={12} />
-                <span>Quad Sync</span>
+                <span>Quad Sync (4 Cams)</span>
               </button>
             </div>
 
@@ -371,6 +469,53 @@ export default function PlaybackSuite({
                 <span>🧪 Sim</span>
               </button>
             </div>
+
+            {/* Aspect Ratio / Fit Mode Button */}
+            <button
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '3px 8px',
+                fontSize: '0.72rem',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-sm)',
+                cursor: 'pointer',
+                background: fitMode === 'fill' ? 'rgba(59, 130, 246, 0.2)' : 'var(--bg-primary)',
+                color: fitMode === 'fill' ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                fontWeight: 600
+              }}
+              onClick={() => {
+                sounds.playClick();
+                setFitMode(fitMode === 'fill' ? 'contain' : 'fill');
+              }}
+              title={fitMode === 'fill' ? "Current: 16:9 Fullscreen Fill (No black bars). Click for Original Aspect Ratio." : "Current: Original Aspect Ratio. Click for Fullscreen Fill (Stretches edge-to-edge)."}
+            >
+              <Scaling size={12} />
+              <span>{fitMode === 'fill' ? 'Stretch 16:9' : 'Original Ratio'}</span>
+            </button>
+
+            {/* Fullscreen Button */}
+            <button
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '3px 8px',
+                fontSize: '0.72rem',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-sm)',
+                cursor: 'pointer',
+                background: isFullscreen ? 'var(--accent-cyan)' : 'var(--bg-primary)',
+                color: isFullscreen ? '#000' : 'var(--text-secondary)',
+                fontWeight: 600
+              }}
+              onClick={handleToggleFullscreen}
+              title="Toggle Browser Fullscreen Mode"
+            >
+              {isFullscreen ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+              <span>{isFullscreen ? 'Exit Full' : 'Fullscreen'}</span>
+            </button>
           </div>
 
           {/* Right Controls: Clip Selector & Export */}
@@ -433,10 +578,14 @@ export default function PlaybackSuite({
                     setClipTime({ current: 0, duration: e.target.duration });
                   }
                 }}
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: fitMode === 'fill' ? 'fill' : 'contain' 
+                }}
               />
             ) : (
-              <canvas ref={canvasRef} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+              <canvas ref={canvasRef} style={{ width: '100%', height: '100%', objectFit: fitMode === 'fill' ? 'fill' : 'contain' }} />
             )}
 
             {/* Watermark Overlay on Footage */}
@@ -473,12 +622,45 @@ export default function PlaybackSuite({
           <div style={{ width: '100%', height: '100%', display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gridTemplateRows: 'repeat(2, minmax(0, 1fr))', gap: '4px', padding: '4px', minHeight: 0, minWidth: 0, overflow: 'hidden' }}>
             {quadCameras.map((cam, idx) => {
               const refs = [quad0Ref, quad1Ref, quad2Ref, quad3Ref];
+              const videoRefs = [quadVideo0Ref, quadVideo1Ref, quadVideo2Ref, quadVideo3Ref];
+              const chKey = cam.liveStreamUrl?.match(/cpplus_ch\d/)?.[0] || `cpplus_ch${idx + 1}`;
+              const rec = quadRecordings[chKey];
+
               return (
-                <div key={cam.id} style={{ position: 'relative', background: '#05070a', overflow: 'hidden', borderRadius: '4px', minHeight: 0, minWidth: 0, height: '100%', width: '100%' }}>
-                  <canvas ref={refs[idx]} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
-                  <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(0,0,0,0.7)', padding: '2px 8px', borderRadius: '3px', fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: '#fff', zIndex: 2 }}>
-                    <span style={{ color: 'var(--accent-cyan)', fontWeight: 600 }}>{cam.name}</span>
-                    <span style={{ marginLeft: '6px', color: 'var(--accent-green)' }}>SYNC</span>
+                <div key={cam.id} style={{ position: 'relative', background: '#05070a', overflow: 'hidden', borderRadius: '4px', minHeight: 0, minWidth: 0, height: '100%', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {useRealRecording && rec ? (
+                    <video 
+                      ref={videoRefs[idx]}
+                      key={rec.filename}
+                      src={`http://localhost:3001${rec.streamUrl}`}
+                      autoPlay
+                      muted
+                      playsInline
+                      onPlay={() => { if (idx === 0) setIsPlaying(true); }}
+                      onPause={() => { if (idx === 0) setIsPlaying(false); }}
+                      onTimeUpdate={(e) => {
+                        if (idx === 0 && e.target.duration) {
+                          setClipTime({ current: e.target.currentTime, duration: e.target.duration });
+                        }
+                      }}
+                      style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        objectFit: fitMode === 'fill' ? 'fill' : 'contain' 
+                      }}
+                    />
+                  ) : (
+                    <canvas ref={refs[idx]} style={{ width: '100%', height: '100%', objectFit: fitMode === 'fill' ? 'fill' : 'contain' }} />
+                  )}
+
+                  {/* Camera OSD Badge */}
+                  <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(0,0,0,0.75)', padding: '2px 8px', borderRadius: '3px', fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: '#fff', zIndex: 5, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ color: 'var(--accent-cyan)', fontWeight: 600 }}>{cam.name.replace('CP PLUS ', '')}</span>
+                    {useRealRecording && rec ? (
+                      <span style={{ color: 'var(--accent-amber)', fontSize: '0.62rem' }}>🔴 DVR SYNC ({rec.filename.slice(11, 19).replace(/-/g, ':')})</span>
+                    ) : (
+                      <span style={{ color: 'var(--accent-green)', fontSize: '0.62rem' }}>SIM SYNC</span>
+                    )}
                   </div>
                 </div>
               );
