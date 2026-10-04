@@ -37,6 +37,7 @@ export default function PlaybackSuite({
   const [selectedRecording, setSelectedRecording] = useState(null);
   const [useRealRecording, setUseRealRecording] = useState(true);
   const [shaCertificate, setShaCertificate] = useState(null);
+  const [clipTime, setClipTime] = useState({ current: 0, duration: 60 });
   const realVideoRef = useRef(null);
 
   const currentCamera = cameras.find(c => c.id === selectedCameraId) || cameras[0];
@@ -45,6 +46,8 @@ export default function PlaybackSuite({
   // Fetch real recordings from backend
   useEffect(() => {
     let isMounted = true;
+    setSelectedRecording(null);
+
     const fetchRecs = () => {
       fetch(`http://localhost:3001/api/recordings/${channelName}`)
         .then(r => r.json())
@@ -53,6 +56,8 @@ export default function PlaybackSuite({
             setRecordings(data.recordings);
             if (data.recordings.length > 0) {
               setSelectedRecording(prev => prev && data.recordings.some(r => r.filename === prev.filename) ? prev : data.recordings[0]);
+            } else {
+              setSelectedRecording(null);
             }
           }
         })
@@ -129,10 +134,10 @@ export default function PlaybackSuite({
     };
   }, [isQuadSync, currentCamera, quadCameras]);
 
-  // Timeline scrubber playback animation
+  // Timeline scrubber playback animation (runs for canvas simulation mode)
   useEffect(() => {
     let timer = null;
-    if (isPlaying) {
+    if (isPlaying && (!useRealRecording || isQuadSync)) {
       timer = setInterval(() => {
         setCurrentTimeSec(prev => {
           if (prev >= 86400) return 0;
@@ -143,24 +148,75 @@ export default function PlaybackSuite({
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [isPlaying, playbackSpeed]);
+  }, [isPlaying, playbackSpeed, useRealRecording, isQuadSync]);
 
   const formatSecondsToTime = (totalSec) => {
     const hours = Math.floor(totalSec / 3600);
     const mins = Math.floor((totalSec % 3600) / 60);
-    const secs = totalSec % 60;
+    const secs = Math.floor(totalSec % 60);
     const pad = (n) => String(n).padStart(2, '0');
     return `${pad(hours)}:${pad(mins)}:${pad(secs)}`;
   };
 
+  // Play / Pause unified handler
+  const handlePlayPause = () => {
+    sounds.playClick();
+    if (useRealRecording && !isQuadSync && realVideoRef.current) {
+      if (realVideoRef.current.paused) {
+        realVideoRef.current.play();
+        setIsPlaying(true);
+      } else {
+        realVideoRef.current.pause();
+        setIsPlaying(false);
+      }
+    } else {
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  // Speed change unified handler
+  const handleSpeedChange = (spd) => {
+    sounds.playClick();
+    setPlaybackSpeed(spd);
+    if (useRealRecording && !isQuadSync && realVideoRef.current) {
+      realVideoRef.current.playbackRate = spd;
+    }
+  };
+
+  // Rewind 30s unified handler
+  const handleRewind30 = () => {
+    sounds.playClick();
+    if (useRealRecording && !isQuadSync && realVideoRef.current) {
+      realVideoRef.current.currentTime = Math.max(0, realVideoRef.current.currentTime - 30);
+    } else {
+      setCurrentTimeSec(prev => Math.max(0, prev - 30));
+    }
+  };
+
+  // Fast forward 30s unified handler
+  const handleFastForward30 = () => {
+    sounds.playClick();
+    if (useRealRecording && !isQuadSync && realVideoRef.current) {
+      realVideoRef.current.currentTime = Math.min(realVideoRef.current.duration || 60, realVideoRef.current.currentTime + 30);
+    } else {
+      setCurrentTimeSec(prev => Math.min(86400, prev + 30));
+    }
+  };
+
+  // Timeline track click seeking handler
   const handleTimelineClick = (e) => {
     if (!timelineTrackRef.current) return;
     const rect = timelineTrackRef.current.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const percentage = Math.max(0, Math.min(1, clickX / rect.width));
-    const newSec = Math.round(percentage * 86400);
-    setCurrentTimeSec(newSec);
     sounds.playClick();
+
+    if (useRealRecording && !isQuadSync && realVideoRef.current && realVideoRef.current.duration) {
+      realVideoRef.current.currentTime = percentage * realVideoRef.current.duration;
+    } else {
+      const newSec = Math.round(percentage * 86400);
+      setCurrentTimeSec(newSec);
+    }
   };
 
   const handleExportClip = async () => {
@@ -197,17 +253,40 @@ export default function PlaybackSuite({
     }
   };
 
-  const needlePercent = (currentTimeSec / 86400) * 100;
+  const needlePercent = (useRealRecording && !isQuadSync && clipTime.duration > 0)
+    ? (clipTime.current / clipTime.duration) * 100
+    : (currentTimeSec / 86400) * 100;
 
   return (
     <div className="playback-container">
       {/* Top Filter Bar: Camera & Date Picker */}
       <div className="control-toolbar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 600 }}>
             <Film size={15} color="var(--accent-blue)" />
             <span>Archive Playback</span>
           </div>
+
+          {/* Camera Selector Dropdown */}
+          {!isQuadSync && (
+            <select
+              className="input-field"
+              style={{ width: 'auto', padding: '3px 8px', fontSize: '0.72rem', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontWeight: 600 }}
+              value={selectedCameraId}
+              onChange={(e) => {
+                if (setSelectedCameraId) setSelectedCameraId(e.target.value);
+                setSelectedRecording(null);
+                setRecordings([]);
+              }}
+              title="Select camera channel to review recorded footage"
+            >
+              {cameras.map(cam => (
+                <option key={cam.id} value={cam.id}>
+                  📹 {cam.name} ({cam.location})
+                </option>
+              ))}
+            </select>
+          )}
 
           {/* Single vs Quad Synchronized Playback Switcher */}
           <div style={{ display: 'flex', background: 'var(--bg-primary)', padding: '2px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
@@ -291,7 +370,7 @@ export default function PlaybackSuite({
           </div>
 
           {/* Real Recording Clip Selector */}
-          {useRealRecording && recordings.length > 0 && (
+          {useRealRecording && recordings.length > 0 && !isQuadSync && (
             <select
               className="input-field"
               style={{ width: 'auto', padding: '3px 8px', fontSize: '0.72rem', background: 'var(--bg-primary)', color: 'var(--accent-cyan)' }}
@@ -338,6 +417,19 @@ export default function PlaybackSuite({
                 src={`http://localhost:3001${selectedRecording.streamUrl}`}
                 controls
                 autoPlay
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+                onRateChange={(e) => setPlaybackSpeed(e.target.playbackRate)}
+                onTimeUpdate={(e) => {
+                  if (e.target.duration) {
+                    setClipTime({ current: e.target.currentTime, duration: e.target.duration });
+                  }
+                }}
+                onLoadedMetadata={(e) => {
+                  if (e.target.duration) {
+                    setClipTime({ current: 0, duration: e.target.duration });
+                  }
+                }}
                 style={{ width: '100%', height: '100%', objectFit: 'contain' }}
               />
             ) : (
@@ -420,7 +512,7 @@ export default function PlaybackSuite({
             <button 
               className="btn btn-secondary" 
               style={{ padding: '6px', borderRadius: '50%' }}
-              onClick={() => setCurrentTimeSec(prev => Math.max(0, prev - 30))}
+              onClick={handleRewind30}
               title="Jump 30 seconds back"
             >
               <Rewind size={14} />
@@ -429,7 +521,7 @@ export default function PlaybackSuite({
             <button 
               className="btn btn-primary" 
               style={{ padding: '6px 14px' }}
-              onClick={() => setIsPlaying(!isPlaying)}
+              onClick={handlePlayPause}
             >
               {isPlaying ? <Pause size={15} /> : <Play size={15} />}
               <span>{isPlaying ? 'Pause' : 'Play'}</span>
@@ -438,7 +530,7 @@ export default function PlaybackSuite({
             <button 
               className="btn btn-secondary" 
               style={{ padding: '6px', borderRadius: '50%' }}
-              onClick={() => setCurrentTimeSec(prev => Math.min(86400, prev + 30))}
+              onClick={handleFastForward30}
               title="Jump 30 seconds forward"
             >
               <FastForward size={14} />
@@ -459,7 +551,7 @@ export default function PlaybackSuite({
                     fontFamily: 'var(--font-mono)',
                     cursor: 'pointer'
                   }}
-                  onClick={() => setPlaybackSpeed(spd)}
+                  onClick={() => handleSpeedChange(spd)}
                 >
                   {spd}x
                 </button>
@@ -474,7 +566,11 @@ export default function PlaybackSuite({
             fontWeight: 700, 
             color: 'var(--accent-cyan)' 
           }}>
-            {formatSecondsToTime(currentTimeSec)} / 23:59:59
+            {useRealRecording && !isQuadSync && selectedRecording ? (
+              `${formatSecondsToTime(Math.round(clipTime.current))} / ${formatSecondsToTime(Math.round(clipTime.duration || 60))} [DVR Clip]`
+            ) : (
+              `${formatSecondsToTime(currentTimeSec)} / 23:59:59`
+            )}
           </div>
 
           {/* Timeline Legend */}

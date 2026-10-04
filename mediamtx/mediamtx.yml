@@ -467,9 +467,8 @@ pathDefaults:
   recordPartDuration: 1s
   # Minimum duration of each segment.
   recordSegmentDuration: 60s
-  # Delete segments after this timespan.
-  # Set to 0s to disable automatic deletion.
-  recordDeleteAfter: 72h
+  # Delete segments after this timespan (12h retention protects disk space across 8 channels)
+  recordDeleteAfter: 12h
 
   ###############################################
   # Default path settings -> Publisher source (when source is "publisher")

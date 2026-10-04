@@ -72,6 +72,66 @@ function getChannelRecordings(channelName) {
     .sort((a, b) => b.filename.localeCompare(a.filename)); // newest first
 }
 
+// Auto-Prune Routine: Active disk space safeguard to protect C: drive
+function pruneOldRecordings(maxTotalMB = 15000, targetMB = 12000) {
+  try {
+    if (!fs.existsSync(RECORDINGS_DIR)) return { purgedCount: 0, freedMB: 0 };
+    
+    const allClips = [];
+    let totalBytes = 0;
+    const channels = fs.readdirSync(RECORDINGS_DIR);
+    channels.forEach(ch => {
+      const chDir = path.join(RECORDINGS_DIR, ch);
+      if (fs.statSync(chDir).isDirectory()) {
+        const files = fs.readdirSync(chDir);
+        files.forEach(f => {
+          if (f.endsWith('.mp4') || f.endsWith('.fmp4') || f.endsWith('.ts')) {
+            const p = path.join(chDir, f);
+            const stat = fs.statSync(p);
+            totalBytes += stat.size;
+            allClips.push({ path: p, size: stat.size, mtime: stat.mtimeMs, filename: f });
+          }
+        });
+      }
+    });
+
+    const totalMB = totalBytes / (1024 * 1024);
+    if (totalMB <= maxTotalMB) {
+      return { totalMB: totalMB.toFixed(2), status: 'OPTIMAL', purgedCount: 0, freedMB: 0 };
+    }
+
+    // Sort oldest first
+    allClips.sort((a, b) => a.mtime - b.mtime);
+    let freedBytes = 0;
+    let purgedCount = 0;
+
+    for (const clip of allClips) {
+      if ((totalBytes - freedBytes) / (1024 * 1024) <= targetMB) break;
+      try {
+        fs.unlinkSync(clip.path);
+        freedBytes += clip.size;
+        purgedCount++;
+      } catch (err) {
+        console.warn('Failed to delete file during prune:', clip.path, err.message);
+      }
+    }
+
+    console.log(`[Storage Guard] Purged ${purgedCount} old recording clips, freed ${(freedBytes / (1024 * 1024)).toFixed(2)} MB.`);
+    return {
+      status: 'PURGED',
+      purgedCount,
+      freedMB: (freedBytes / (1024 * 1024)).toFixed(2),
+      remainingMB: ((totalBytes - freedBytes) / (1024 * 1024)).toFixed(2)
+    };
+  } catch (err) {
+    console.error('Error during pruneOldRecordings:', err);
+    return { error: err.message };
+  }
+}
+
+// Run periodic storage safeguard check every 5 minutes
+setInterval(() => pruneOldRecordings(), 5 * 60 * 1000);
+
 // -------------------------------------------------------------
 // REST API ROUTES
 // -------------------------------------------------------------
@@ -231,7 +291,14 @@ app.post('/api/recordings/export', (req, res) => {
   }
 });
 
-// 7. AI Events API
+// 7. Manual/Automated Storage Prune Endpoint
+app.post('/api/recordings/prune', (req, res) => {
+  const { maxStorageMB, targetMB } = req.body || {};
+  const result = pruneOldRecordings(maxStorageMB || 15000, targetMB || 12000);
+  res.json(result);
+});
+
+// 8. AI Events API
 app.get('/api/ai/events', (req, res) => {
   res.json({ events: eventLog.slice(0, 50) });
 });

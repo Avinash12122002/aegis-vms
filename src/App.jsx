@@ -110,18 +110,22 @@ export default function App() {
               const alarm = msg.data;
               const matchingCam = cameras.find(c => c.id === alarm.cameraId) || { name: alarm.cameraId };
               
-              setEvents(prev => [{
-                id: alarm.id,
-                cameraId: alarm.cameraId,
-                cameraName: matchingCam.name,
-                siteName: 'CP PLUS DVR',
-                type: alarm.type.toUpperCase().replace('_', ' '),
-                target: alarm.label,
-                confidence: `${Math.round(alarm.confidence * 100)}%`,
-                timestamp: new Date(alarm.timestamp).toLocaleTimeString(),
-                severity: 'critical',
-                acknowledged: false
-              }, ...prev.slice(0, 49)]);
+              setEvents(prev => {
+                // Prevent duplicate event ID keys in React lists
+                if (prev.some(e => e.id === alarm.id)) return prev;
+                return [{
+                  id: alarm.id || `evt-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                  cameraId: alarm.cameraId,
+                  cameraName: matchingCam.name,
+                  siteName: 'CP PLUS DVR',
+                  type: alarm.type.toUpperCase().replace('_', ' '),
+                  target: alarm.label,
+                  confidence: `${Math.round(alarm.confidence * 100)}%`,
+                  timestamp: new Date(alarm.timestamp).toLocaleTimeString(),
+                  severity: 'critical',
+                  acknowledged: false
+                }, ...prev.slice(0, 49)];
+              });
 
               if (!soundMuted) {
                 sounds.playAlarm();
