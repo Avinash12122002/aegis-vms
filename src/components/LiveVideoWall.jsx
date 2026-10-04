@@ -28,13 +28,21 @@ export default function LiveVideoWall({
   onAcknowledgeEvent,
   selectedSiteId
 }) {
-  const [gridMode, setGridMode] = useState(4); // 1, 4, 9, 16
+  const [gridMode, setGridMode] = useState(() => {
+    const saved = localStorage.getItem('aegis_grid_mode');
+    return saved ? Number(saved) : 4;
+  });
   const [activePTZCamera, setActivePTZCamera] = useState(null);
   const [streamQuality, setStreamQuality] = useState('sub'); // 'sub' or 'main'
   const [isAlertDrawerOpen, setIsAlertDrawerOpen] = useState(false);
   const [maximizedCamId, setMaximizedCamId] = useState(null);
   const [showOSD, setShowOSD] = useState(true);
   const [showAiBoxes, setShowAiBoxes] = useState(true);
+
+  // Persist selected grid layout on refresh
+  React.useEffect(() => {
+    localStorage.setItem('aegis_grid_mode', String(gridMode));
+  }, [gridMode]);
 
   // Filter cameras by site
   const visibleCameras = cameras.filter(c => selectedSiteId === 'all' || c.siteId === selectedSiteId);
@@ -85,6 +93,14 @@ export default function LiveVideoWall({
               title="2x2 Quad View (4 Cameras)"
             >
               <Grid2X2 size={14} />
+            </button>
+            <button 
+              className={`grid-btn ${gridMode === 8 && !maximizedCamId ? 'active' : ''}`}
+              onClick={() => { setGridMode(8); setMaximizedCamId(null); }}
+              title="4x2 DVR View (8 Cameras)"
+              style={{ fontWeight: 700, fontSize: '0.75rem', minWidth: '26px' }}
+            >
+              8
             </button>
             <button 
               className={`grid-btn ${gridMode === 9 && !maximizedCamId ? 'active' : ''}`}

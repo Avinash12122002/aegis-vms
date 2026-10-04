@@ -302,7 +302,7 @@ hlsAllowOrigin: '*'
 hlsTrustedProxies: []
 # By default, HLS is generated only when requested by a user.
 # This option allows to generate it always, avoiding the delay between request and generation.
-hlsAlwaysRemux: no
+hlsAlwaysRemux: yes
 # Variant of the HLS protocol to use. Available options are:
 # * mpegts - uses MPEG-TS segments, for maximum compatibility.
 # * fmp4 - uses fragmented MP4 segments, more efficient.
@@ -698,27 +698,27 @@ pathDefaults:
 paths:
   cpplus_ch1:
     source: rtsp://admin:kumar@1212@192.168.1.2:554/cam/realmonitor?channel=1&subtype=0
-    sourceOnDemand: yes
+    sourceOnDemand: no
   cpplus_ch2:
     source: rtsp://admin:kumar@1212@192.168.1.2:554/cam/realmonitor?channel=2&subtype=0
-    sourceOnDemand: yes
+    sourceOnDemand: no
   cpplus_ch3:
     source: rtsp://admin:kumar@1212@192.168.1.2:554/cam/realmonitor?channel=3&subtype=0
-    sourceOnDemand: yes
+    sourceOnDemand: no
   cpplus_ch4:
     source: rtsp://admin:kumar@1212@192.168.1.2:554/cam/realmonitor?channel=4&subtype=0
-    sourceOnDemand: yes
+    sourceOnDemand: no
   cpplus_ch5:
     source: rtsp://admin:kumar@1212@192.168.1.2:554/cam/realmonitor?channel=5&subtype=0
-    sourceOnDemand: yes
+    sourceOnDemand: no
   cpplus_ch6:
     source: rtsp://admin:kumar@1212@192.168.1.2:554/cam/realmonitor?channel=6&subtype=0
-    sourceOnDemand: yes
+    sourceOnDemand: no
   cpplus_ch7:
     source: rtsp://admin:kumar@1212@192.168.1.2:554/cam/realmonitor?channel=7&subtype=0
-    sourceOnDemand: yes
+    sourceOnDemand: no
   cpplus_ch8:
     source: rtsp://admin:kumar@1212@192.168.1.2:554/cam/realmonitor?channel=8&subtype=0
-    sourceOnDemand: yes
+    sourceOnDemand: no
 
   all_others:

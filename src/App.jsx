@@ -37,7 +37,16 @@ export default function App() {
       try {
         const parsed = JSON.parse(saved);
         if (parsed.length > 0 && parsed.every(c => c.id.startsWith('cpplus'))) {
-          return parsed;
+          return parsed.map(c => {
+            let url = c.liveStreamUrl || '';
+            if (url.includes(':8889/')) {
+              url = url.replace(':8889/', ':8888/');
+            }
+            if (url && !url.includes('autoplay=')) {
+              url += (url.includes('?') ? '&' : '?') + 'autoplay=true&muted=true&controls=false';
+            }
+            return { ...c, liveStreamUrl: url };
+          });
         }
       } catch (e) {
         console.error(e);

@@ -5,14 +5,13 @@ function md5(str) {
   return crypto.createHash('md5').update(str).digest('hex');
 }
 
-const uri = 'rtsp://192.168.1.2:554/cam/realmonitor?channel=1&subtype=0';
+const uri = 'rtsp://192.168.1.2:554/cam/realmonitor?channel=1&subtype=1';
 const client = net.createConnection({ host: '192.168.1.2', port: 554 }, () => {
   client.write(`DESCRIBE ${uri} RTSP/1.0\r\nCSeq: 1\r\n\r\n`);
 });
 
 client.on('data', (data) => {
   const str = data.toString();
-  console.log('--- RECV ---\n' + str.trim());
   if (str.includes('401 Unauthorized')) {
     const realmMatch = str.match(/realm="([^"]+)"/);
     const nonceMatch = str.match(/nonce="([^"]+)"/);
@@ -30,9 +29,8 @@ client.on('data', (data) => {
       client.write(req);
     }
   } else if (str.includes('200 OK')) {
-    console.log('\n=============================================');
-    console.log('🎉 SUCCESS! CP PLUS DVR ACCEPTED CREDENTIALS!');
-    console.log('=============================================');
+    console.log('--- SUBSTREAM 1 SDP ---');
+    console.log(str);
     client.end();
   }
 });
@@ -40,4 +38,4 @@ client.on('data', (data) => {
 setTimeout(() => {
   client.destroy();
   process.exit(0);
-}, 4000);
+}, 3000);
