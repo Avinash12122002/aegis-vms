@@ -599,10 +599,6 @@ npm run dev
 
 ---
 
----
-
----
-
 ## 16. Phase-by-Phase Developer Implementation Roadmap
 
 ```mermaid
