@@ -504,84 +504,100 @@ A VMS architecture must scale predictably. Merely having VMS software does not g
 
 ---
 
-## 15. Comprehensive Technology Stack & Developer Requirements
+## 15. Comprehensive Technology Stack & Developer Requirements (JavaScript / TypeScript & Node.js Full-Stack)
 
-To engineer a resilient, enterprise-grade VMS from scratch without runtime crashes or architectural flaws, development teams must understand the exact ecosystem, frameworks, tools, and developer proficiencies required.
+This VMS is architected to be fully developed and maintained using the **JavaScript / TypeScript & Node.js** ecosystem. A developer proficient in modern JavaScript, Node.js, and React can build, scale, and maintain every layer of this platform without needing disparate legacy languages.
 
-### 📌 1. Exhaustive Component Technology Stack
+### 📌 1. JavaScript / TypeScript & Node.js Component Technology Stack
 
-| Architecture Layer | Core Technologies | Recommended Libraries / Runtimes | Purpose & Justification |
+| Architecture Layer | Core Language | Frameworks & NPM Packages | Purpose & Developer Usage |
 | :--- | :--- | :--- | :--- |
-| **Edge Media Gateway** | Go, C/C++ | **MediaMTX**, **go2rtc** | Ultra-low memory RTSP ingestion, multiplexing, and direct remuxing to WebRTC / Low-Latency HLS. Handles 100+ streams with minimal CPU overhead. |
-| **Video Transcoding & Slicing** | C / CLI | **FFmpeg 6.0+** (`libx264`, `libx265`, `h264_nvenc`) | Slicing 24/7 continuous video into 60-second fMP4 segments, pre-alarm ring-buffering, and hardware-accelerated transcoding. |
-| **Frontend Web App** | JavaScript / TypeScript | **React 18+ / Next.js**, **Hls.js**, **Tailwind / Vanilla CSS** | High-performance dynamic video wall (1x1 to 4x4), hardware HEVC browser playback, stateful grid persistence (`localStorage`), HTML5 Canvas for tripwire polygon drawing. |
-| **Backend API Gateway** | Node.js / Go | **Express / NestJS** or **Go Fiber** | Central camera registry, device health heartbeats, PTZ command routing, user authentication, and stream token generation. |
-| **Database & Time-Series** | SQL | **PostgreSQL 15+** with **TimescaleDB** & **pgcrypto** | Storing camera configurations, site hierarchies, role permissions, immutable audit logs, and millions of time-stamped AI alarm events. |
-| **Cloud Object Storage** | S3-Compatible API | **Cloudflare R2** with AWS S3 SDK | High-durability archival storage for recorded clips with **$0 egress fees**, enabling cost-effective multi-location surveillance backups. |
+| **Frontend Web App** | TypeScript / JavaScript | **React 18+ / Next.js**, **Hls.js**, **Tailwind / Vanilla CSS**, **Lucide Icons** | Dynamic video wall (1x1 to 4x4), hardware HEVC browser playback, stateful grid persistence (`localStorage`), HTML5 Canvas for tripwire polygon drawing. |
+| **Backend API & Service** | TypeScript / JavaScript | **Node.js 18+ LTS**, **Express** or **Fastify**, **TypeScript (`tsx`)** | Central camera registry, device health heartbeats, PTZ command routing, user authentication (JWT), and stream token generation. |
+| **Real-Time Communication** | JavaScript / Node.js | **`ws`** or **`socket.io`** | Real-time WebSocket broadcasting of AI alarms, tripwire breaches, and PTZ joystick movements to all connected operator screens. |
+| **Edge Media Gateway** | Precompiled Binary + Node.js | **MediaMTX** (managed via Node.js `child_process`) | High-throughput RTSP ingestion, multiplexing, and direct remuxing to WebRTC / Low-Latency HLS. Controlled and monitored by Node.js. |
+| **Video Transcoding & Slicing** | JavaScript / Node.js | **`fluent-ffmpeg`**, **FFmpeg CLI** | Node.js workers slice 24/7 continuous video into 60-second fMP4 segments and manage pre/post-alarm ring buffers. |
+| **Camera Discovery & PTZ** | JavaScript / Node.js | **`node-onvif`** / **`onvif`** | Pure JavaScript implementation of ONVIF WS-Discovery (SOAP/XML) to auto-detect IP cameras on the local subnet and dispatch Pan/Tilt/Zoom commands. |
+| **Database & ORM** | TypeScript / JavaScript | **PostgreSQL 15+**, **Prisma ORM** or **Drizzle ORM** (or `pg`) | Storing camera configurations, site hierarchies, role permissions, immutable audit logs, and millions of time-stamped AI alarm events. |
+| **Cloud Object Storage** | JavaScript / Node.js | **`@aws-sdk/client-s3`** (Cloudflare R2) | Uploading 60-second video chunks directly to Cloudflare R2 with **$0 egress fees**, plus generating pre-signed URLs for secure clip playback. |
+| **AI Computer Vision (in Node.js)** | JavaScript / Node.js | **`onnxruntime-node`** or **`@tensorflow/tfjs-node`** (YOLOv8 ONNX) | Real-time object detection (Person, Vehicle) executed directly inside Node.js workers using ONNX Runtime, eliminating the need for a separate Python runtime. |
+| **Mobile Application** | TypeScript / JavaScript | **React Native** or **Progressive Web App (PWA)** | Cross-platform mobile monitoring app for Android & iOS built with pure JavaScript/TypeScript and hardware-accelerated video decoding. |
 | **Zero-Trust Network & NAT** | Networking / Tunneling | **Cloudflare Zero Trust (`cloudflared`)** | Secure remote viewing without opening router firewall ports (no port 554/80 forwarding). Mitigates DDoS and botnet exposure. |
-| **AI Computer Vision Engine** | Python 3.10+ / C++ | **PyTorch**, **YOLOv8 / YOLOv11**, **ByteTrack**, **TensorRT**, **OpenCV** | Real-time object detection (Person, Vehicle), spatial intrusion polygon intersection, and directional virtual tripwire math. |
-| **Mobile Client** | Dart | **Flutter 3.x** | Hardware-accelerated cross-platform mobile app for iOS and Android with low-latency HLS/WebRTC player and push notification services (FCM). |
-| **DevOps & Edge Deployment** | Containerization | **Docker**, **Docker Compose**, **systemd** | Reproducible deployment on Linux/Windows edge mini PCs, automatic crash restart policies, and healthcheck monitoring. |
 
 ---
 
-### 📌 2. Developer Skill Sets & Technical Competencies
+### 📌 2. Developer Skill Sets & Technical Competencies (JS / TS & Node.js)
 
-A software engineer building an enterprise VMS must possess core competencies across five domains:
+A JavaScript/TypeScript developer building this enterprise VMS requires the following core competencies:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                   ENTERPRISE VMS DEVELOPER CORE SKILLS                 │
+│             JAVASCRIPT / TYPESCRIPT FULL-STACK VMS SKILL SET           │
 ├────────────────────────────────────────────────────────────────────────┤
-│ 1. Video & Streaming Protocols: RTSP, ONVIF Profile S/T, WebRTC, HLS  │
-│ 2. Codecs & Containers: H.264, H.265 (HEVC), AAC, fMP4, TS, MP4       │
-│ 3. Media Engines & CLI: FFmpeg, MediaMTX, Hls.js hardware decoding    │
-│ 4. Backend & Security: JWT, Ephemeral Signed URLs, RBAC, WebSockets   │
-│ 5. Computer Vision & Math: OpenCV, YOLO, 2D Vector Geometry (Tripwire)│
+│ 1. Frontend: React 18+, Hls.js lifecycle, Canvas 2D Vector Drawing     │
+│ 2. Backend: Node.js (Express/Fastify), WebSocket (ws), Child Processes │
+│ 3. Media in JS: fluent-ffmpeg, ONVIF SOAP/XML (node-onvif), HLS fMP4   │
+│ 4. AI in JS: onnxruntime-node with YOLOv8.onnx models (No Python needed)│
+│ 5. Database & Cloud: PostgreSQL + Prisma/Drizzle, @aws-sdk/client-s3   │
+│ 6. Security: JWT, HMAC-SHA256 Signed Tokens, RBAC Middleware           │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-1. **Streaming & Networking Protocols:**
-   * Understanding RTSP handshake mechanisms (`OPTIONS`, `DESCRIBE`, `SETUP`, `PLAY`, `TEARDOWN`) over TCP and UDP.
-   * Practical experience with ONVIF WS-Discovery (SOAP/XML) for automatic IP camera detection on local subnets.
-   * Deep understanding of WebRTC (SDP offer/answer, ICE candidates, STUN/TURN) and HLS (M3U8 playlists, fMP4 init/media segments).
-2. **Video Codecs & Browser Acceleration:**
-   * Knowledge of H.264 (AVC) vs H.265 (HEVC) compression and browser compatibility nuances (e.g. Chrome's HEVC hardware decoder requirements).
-   * Dual-streaming concepts: managing high-resolution Main-Streams (1080p/4K) vs lightweight Sub-Streams (360p/D1) to preserve client memory and bandwidth.
-3. **Frontend Performance & Memory Management:**
-   * Managing HTML5 `<video>` element lifecycles; destroying `Hls.js` instances properly to prevent massive browser RAM leaks when toggling 8–16 camera feeds.
-   * Canvas 2D / WebGL rendering for drawing interactive intrusion polygons and directional tripwire vectors over live video.
-4. **Backend Architecture & Security:**
-   * Implementing Role-Based Access Control (RBAC) down to the individual camera channel level.
-   * Issuing short-lived, cryptographically signed streaming tokens (HMAC SHA-256) to ensure video URLs cannot be forwarded or scraped.
-   * Zero-Trust networking concepts (outbound tunnels vs insecure WAN port forwarding).
-5. **Computer Vision & Spatial Geometry:**
-   * Integrating YOLO neural network inference with frame samplers (e.g. analyzing 5 FPS instead of 30 FPS to save compute).
-   * Ray-casting algorithm for Point-in-Polygon (PIP) detection to determine if a bounding box center is inside an intrusion zone.
-   * Vector cross-product math to determine whether an object trajectory crosses a tripwire from side A to side B.
+1. **JavaScript Streaming & Browser Player Lifecycle:**
+   * Proficient with **`Hls.js`** inside React components: instantiating, attaching to HTML5 `<video>`, handling error recovery (`hls.recoverMediaError()`), and strictly destroying instances (`hls.destroy()`) on unmount to prevent browser RAM leaks.
+   * Dual-streaming UI architecture: toggling lightweight sub-streams on multi-camera grids and switching to full-resolution main-streams when an operator double-clicks a camera.
+2. **Node.js Asynchronous & Child Process Management:**
+   * Spawning and managing background binaries (MediaMTX, FFmpeg) using Node.js `child_process.spawn()` with auto-restart supervision.
+   * Stream piping in Node.js: handling video byte streams, file streams, and memory buffers efficiently without blocking the event loop.
+3. **ONVIF Protocol in JavaScript:**
+   * Using **`node-onvif`** to discover cameras on the LAN (`onvif.startProbe()`), authenticate via WS-UsernameToken digest, and send PTZ move/stop commands.
+4. **AI Inference Directly in Node.js (ONNX Runtime):**
+   * Running exported `yolov8n.onnx` neural models inside Node.js via **`onnxruntime-node`**.
+   * Performing 2D vector geometry and Ray-Casting in JavaScript (`point-in-polygon` algorithm) to detect when a detected Person or Vehicle enters a virtual intrusion polygon or crosses a virtual tripwire.
+5. **Backend Security & Cloud Integration:**
+   * Implementing Role-Based Access Control (RBAC) middleware in Express/Fastify.
+   * Generating 60-second time-limited HMAC-SHA256 signed streaming URLs.
+   * Using **`@aws-sdk/client-s3`** to upload video segments to Cloudflare R2 and generate pre-signed playback links.
 
 ---
 
-### 📌 3. Local Development Environment & Tooling Setup Checklist
+### 📌 3. Local Development Environment & Setup Checklist for JS/Node.js Developers
 
-To set up a complete local development and testing workstation:
+To set up a complete local development environment:
 
-#### 💻 Hardware Requirements:
-* **CPU:** Quad-core Intel Core i5 / AMD Ryzen 5 or higher.
-* **RAM:** 16 GB minimum (32 GB recommended for running multiple 1080p transcode streams and AI models simultaneously).
-* **GPU (Optional for AI):** Nvidia GPU with CUDA support (GTX 1660 / RTX 3060 or higher) for hardware-accelerated transcoding and YOLO inference.
-* **Storage:** 256 GB+ NVMe SSD (high IOPS required for concurrent video chunking).
+#### 💻 Workstation Hardware:
+* **CPU:** Quad-core Intel Core i5 / AMD Ryzen 5 or Apple Silicon M-series.
+* **RAM:** 16 GB minimum (32 GB recommended).
+* **Storage:** 256 GB+ SSD.
 
-#### 🛠️ Required Software & Binaries:
-* [x] **Node.js (v18.x or v20.x LTS):** Run-time for modern full-stack development and tooling.
-* [x] **Go (v1.21+):** For compiling or customizing MediaMTX gateway plugins and high-throughput streaming proxies.
-* [x] **Python (v3.10 or v3.11):** With `torch`, `ultralytics` (YOLO), `opencv-python`, and `numpy` for AI analytics.
-* [x] **MediaMTX Binary:** Placed in the project directory as the local edge RTSP/HLS gateway daemon.
-* [x] **FFmpeg 6.0+:** Added to the system `PATH` with `libx264`, `libx265`, and hardware acceleration flags.
-* [x] **Cloudflare `cloudflared` CLI:** For initiating secure Zero-Trust outbound tunnels.
-* [x] **PostgreSQL 15+ (with TimescaleDB extension):** Local or Dockerized relational database for telemetry and logs.
-* [x] **VLC Media Player:** Essential debugging tool for validating raw RTSP camera streams directly on the LAN.
-* [x] **Git & Docker Desktop:** For version control and containerized multi-service orchestration.
+#### 🛠️ Installed Tools & Dependencies:
+* [x] **Node.js (v18.x or v20.x LTS):** Primary runtime.
+* [x] **npm** or **pnpm**: Package manager.
+* [x] **MediaMTX Binary:** Placed in `./mediamtx/mediamtx.exe` (or Linux binary) as the edge RTSP gateway daemon.
+* [x] **FFmpeg 6.0+:** Installed on system `PATH` for video slicing and transcoding.
+* [x] **PostgreSQL 15+:** Local or Docker instance with Prisma / Drizzle migrations.
+* [x] **VLC Media Player:** Tool for validating raw RTSP camera streams on the LAN.
+* [x] **VS Code** with ESLint, Prettier, and Tailwind extensions.
+
+#### 📦 Essential NPM Packages to Install:
+```bash
+# Core Backend & Realtime
+npm install express ws cors dotenv jsonwebtoken bcryptjs @aws-sdk/client-s3
+
+# Video & Camera Protocols
+npm install hls.js fluent-ffmpeg node-onvif
+
+# AI Computer Vision in Node.js (Pure JS/ONNX - No Python required)
+npm install onnxruntime-node canvas point-in-polygon
+
+# Database & ORM
+npm install @prisma/client prisma
+
+# Frontend (React / Vite)
+npm install react react-dom lucide-react
+```
+
+---
 
 ---
 
